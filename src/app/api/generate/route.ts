@@ -1,78 +1,40 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey || "");
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const { name, jobRole, skills, jobDescription, tone, length } = body;
+    const body = await request.json();
+    const { jobTitle, company, hiringManager, jobDescription, applicantName, email, yearsExp, background, skills, tone, length, opening } = body;
 
-    if (!name || !jobRole) {
-      return NextResponse.json(
-        { success: false, error: "Name and Job Role are required." },
-        { status: 400 }
-      );
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ success: false, error: "GEMINI_API_KEY is missing in environment variables." }, { status: 500 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+    const ai = new GoogleGenAI({ apiKey });
+    const modelName = "gemini-3.6-flash";
 
-    // Tone aur Length ki instructions
-    const toneInstruction = 
-      tone === "Casual" ? "Use a friendly, approachable, and relaxed tone while maintaining professionalism." :
-      tone === "Enthusiastic" ? "Use a high-energy, passionate, and deeply motivated tone expressing immense excitement." :
-      "Use a formal, highly professional, corporate, and polished tone.";
+    const prompt = `
+You are an elite executive career strategist and master copywriter. Execute a rigorous 3-stage internal refinement process to produce an exceptional, hyper-targeted cover letter for ${company}.
 
-    const lengthInstruction =
-      length === "Short" ? "Keep it concise and brief (around 150 words)." :
-      length === "Detailed" ? "Make it comprehensive and detailed (around 400 words)." :
-      "Keep it standard length (around 250 words).";
+STAGE 1 (Drafting): Establish a robust formal structure for the role of ${jobTitle}, incorporating applicant background (${background}) and key skills (${skills}).
+STAGE 2 (Targeting): Refine the content to strictly adhere to a "${tone}" tone, a "${length}" length, and the "${opening}" opening style, ensuring deep alignment with ${company} using this job description: ${jobDescription || "Standard requirements"}.
+STAGE 3 (Polishing): Eliminate all robotic clichés, corporate fluff, and grammatical awkwardness. Ensure it reads as if written by a top-tier human professional.
 
-    // --- STEP 1: Draft Generation with Job Description Context ---
-    const step1Prompt = `
-      You are an expert career writer. Write a first-draft cover letter for:
-      - Name: ${name}
-      - Role: ${jobRole}
-      - Skills: ${skills || "Not specified"}
-      - Target Job Description/Posting: ${jobDescription || "None provided"}
-      - Tone: ${toneInstruction}
-      - Length: ${lengthInstruction}
-
-      Instruction: If a Target Job Description is provided above, carefully analyze it, extract key requirements, and weave its specific keywords and company context naturally into the cover letter.
+CRITICAL: Return ONLY the final polished cover letter text. No introductory remarks, no stage breakdowns, no markdown wrapping other than the letter itself.
     `;
-    const result1 = await model.generateContent(step1Prompt);
-    const draft1 = result1.response.text();
 
-    // --- STEP 2: Review and Improve (Pass 2) ---
-    const step2Prompt = `
-      Review the following cover letter draft. Ensure it deeply aligns with the Target Job Description provided earlier (${jobDescription ? "Job description was provided" : "No job description"}). Improve its professional impact and flow:
-      
-      DRAFT:
-      ${draft1}
-    `;
-    const result2 = await model.generateContent(step2Prompt);
-    const draft2 = result2.response.text();
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: prompt,
+    });
 
-    // --- STEP 3: Final Polish (Pass 3) ---
-    const step3Prompt = `
-      Perform a final polish on this cover letter. Ensure absolute grammatical perfection, strong closing hooks, and strict adherence to the requested tone (${tone}) and length (${length}). Return ONLY the final polished letter text without meta-commentary:
-      
-      CURRENT DRAFT:
-      ${draft2}
-    `;
-    const result3 = await model.generateContent(step3Prompt);
-    const finalLetter = result3.response.text();
+    const finalLetter = response.text || "";
 
     return NextResponse.json({ success: true, data: finalLetter });
   } catch (error: unknown) {
     console.error("Gemini API Error:", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to generate cover letter.";
-
-    return NextResponse.json(
-      { success: false, error: message },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : "Failed to generate cover letter.";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
