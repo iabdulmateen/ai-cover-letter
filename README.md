@@ -35,12 +35,19 @@ Ensure you have Node.js installed on your machine and a valid API key from [Goog
    ```bash
    git clone [https://github.com/your-username/lettercraft.git](https://github.com/your-username/lettercraft.git)
    cd lettercraft
- 1 Install dependencies:npm install
- 2 Configure Environment Variables:
+1 Install dependencies:npm install
+ 
+ 
+2 Configure Environment Variables:
 Create a file named .env.local in the root directory and add your Gemini API key:GEMINI_API_KEY=your_actual_api_key_here
+
 3 Run the Development Server:npm run dev
+
 4 Open in Browser:
 Navigate to http://localhost:3000 to start building your cover letters.
+
+
+
 lettercraft/
 ├── src/
 │   ├── app/
