@@ -206,11 +206,38 @@ function StepProgress({ current }: { current: 1 | 2 | 3 }) {
   );
 }
 
-function Step1({ f, up, onNext }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void }) {
+function Step1({ f, up, onNext, onClear }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onClear?: () => void }) {
   const can = f.jobTitle.trim() && f.company.trim();
   return (
     <div>
-      <Mono size={10} color={C.accent}>Step 1 of 3</Mono>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Mono size={10} color={C.accent}>Step 1 of 3</Mono>
+        {onClear && (
+          <button
+            id="clear-fields-step1-btn"
+            type="button"
+            onClick={onClear}
+            style={{
+              background: "none",
+              border: "none",
+              color: C.dim,
+              fontSize: 12,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 8px",
+              borderRadius: 6,
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = C.dim)}
+            title="Reset and clear all form inputs"
+          >
+            <span>🗑️</span> Clear All Fields
+          </button>
+        )}
+      </div>
       <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>What position are you applying for?</h2>
       <p style={{ fontSize: 13, color: C.muted, marginBottom: 24, lineHeight: 1.6 }}>Pasting the job description helps tailor your letter.</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -226,7 +253,7 @@ function Step1({ f, up, onNext }: { f: Form; up: (k: keyof Form, v: string) => v
   );
 }
 
-function Step2({ f, up, onNext, onBack }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onBack: () => void }) {
+function Step2({ f, up, onNext, onBack, onClear }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onBack: () => void; onClear?: () => void }) {
   const [skillInput, setSkillInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const can = f.applicantName.trim() && f.background.trim();
@@ -242,7 +269,34 @@ function Step2({ f, up, onNext, onBack }: { f: Form; up: (k: keyof Form, v: stri
 
   return (
     <div>
-      <Mono size={10} color={C.accent}>Step 2 of 3</Mono>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Mono size={10} color={C.accent}>Step 2 of 3</Mono>
+        {onClear && (
+          <button
+            id="clear-fields-step2-btn"
+            type="button"
+            onClick={onClear}
+            style={{
+              background: "none",
+              border: "none",
+              color: C.dim,
+              fontSize: 12,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              padding: "4px 8px",
+              borderRadius: 6,
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#dc2626")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = C.dim)}
+            title="Reset and clear all form inputs"
+          >
+            <span>🗑️</span> Clear All Fields
+          </button>
+        )}
+      </div>
       <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Tell us about yourself</h2>
       <p style={{ fontSize: 13, color: C.muted, marginBottom: 24, lineHeight: 1.6 }}>Add your background and professional skills.</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -884,6 +938,15 @@ export default function Home() {
     setForm(prev => ({ ...prev, [k]: v }));
   }
 
+  function handleClear() {
+    setForm(BLANK);
+    try {
+      localStorage.removeItem("lettercraft_form");
+    } catch {
+      // ignore
+    }
+  }
+
   async function handleGenerate(isRefine = false) {
     if (isRefine && refineCount >= 3) return;
     setIsGenerating(true);
@@ -927,8 +990,8 @@ export default function Home() {
           </div>
           <StepProgress current={step} />
           <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "24px 20px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
-            {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} />}
-            {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+            {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} onClear={handleClear} />}
+            {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} onClear={handleClear} />}
             {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} isGenerating={isGenerating} />}
           </div>
         </div>
