@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { calculateReadability } from "@/lib/readability";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
@@ -97,7 +97,8 @@ function PrimaryBtn({
   disabled, 
   icon,
   isGenerating,
-  className = ""
+  className = "",
+  shortcut
 }: { 
   id?: string;
   label: string; 
@@ -106,6 +107,7 @@ function PrimaryBtn({
   icon?: React.ReactNode;
   isGenerating?: boolean;
   className?: string;
+  shortcut?: string;
 }) {
   const active = !disabled && !isGenerating;
   return (
@@ -139,6 +141,11 @@ function PrimaryBtn({
       ) : (
         <>
           {icon}{label}
+          {shortcut && (
+            <kbd style={{ fontSize: 10, padding: "2px 6px", background: "rgba(255,255,255,0.24)", borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, letterSpacing: "0.02em", color: "#ffffff", marginLeft: 4 }}>
+              {shortcut}
+            </kbd>
+          )}
         </>
       )}
     </button>
@@ -151,7 +158,8 @@ function GhostBtn({
   onClick, 
   disabled, 
   icon,
-  className = ""
+  className = "",
+  shortcut
 }: { 
   id?: string;
   label: string; 
@@ -159,6 +167,7 @@ function GhostBtn({
   disabled?: boolean; 
   icon?: React.ReactNode;
   className?: string;
+  shortcut?: string;
 }) {
   const active = !disabled;
   return (
@@ -183,6 +192,11 @@ function GhostBtn({
       }}
     >
       {icon}{label}
+      {shortcut && (
+        <kbd style={{ fontSize: 10, padding: "2px 5px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.dim, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, letterSpacing: "0.02em", marginLeft: 4 }}>
+          {shortcut}
+        </kbd>
+      )}
     </button>
   );
 }
@@ -206,7 +220,7 @@ function StepProgress({ current }: { current: 1 | 2 | 3 }) {
   );
 }
 
-function Step1({ f, up, onNext, onClear }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onClear?: () => void }) {
+function Step1({ f, up, onNext, onClear, modKey = "Ctrl" }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onClear?: () => void; modKey?: string }) {
   const can = f.jobTitle.trim() && f.company.trim();
   return (
     <div>
@@ -247,13 +261,13 @@ function Step1({ f, up, onNext, onClear }: { f: Form; up: (k: keyof Form, v: str
         </div>
         <Field label="Hiring Manager" hint="Optional"><input style={INPUT_S} placeholder="Jordan Lee" value={f.hiringManager} onChange={(e) => up("hiringManager", e.target.value)} /></Field>
         <Field label="Job Description" hint="Recommended"><textarea rows={5} style={{ ...INPUT_S, resize: "none" }} placeholder="Paste job description..." value={f.jobDescription} onChange={(e) => up("jobDescription", e.target.value)} /></Field>
-        <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} />
+        <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} shortcut={`${modKey}+↵`} />
       </div>
     </div>
   );
 }
 
-function Step2({ f, up, onNext, onBack, onClear }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onBack: () => void; onClear?: () => void }) {
+function Step2({ f, up, onNext, onBack, onClear, modKey = "Ctrl" }: { f: Form; up: (k: keyof Form, v: string) => void; onNext: () => void; onBack: () => void; onClear?: () => void; modKey?: string }) {
   const [skillInput, setSkillInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const can = f.applicantName.trim() && f.background.trim();
@@ -334,8 +348,8 @@ function Step2({ f, up, onNext, onBack, onClear }: { f: Form; up: (k: keyof Form
           </div>
         </Field>
         <div style={{ display: "flex", gap: 10 }}>
-          <GhostBtn label="Back" onClick={onBack} />
-          <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} />
+          <GhostBtn label="Back" onClick={onBack} shortcut="Esc" />
+          <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} shortcut={`${modKey}+↵`} />
         </div>
       </div>
     </div>
@@ -568,7 +582,7 @@ function ToneHelpModal({
   );
 }
 
-function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void; isGenerating?: boolean }) {
+function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void; isGenerating?: boolean; modKey?: string }) {
   const [showToneHelp, setShowToneHelp] = useState(false);
   const tones = [{ key: "professional", label: "Professional" }, { key: "enthusiastic", label: "Enthusiastic" }, { key: "concise", label: "Concise" }, { key: "creative", label: "Creative" }];
   const lengths = [{ key: "brief", label: "Brief (~150w)" }, { key: "standard", label: "Standard (~280w)" }, { key: "detailed", label: "Detailed (~380w)" }];
@@ -640,12 +654,13 @@ function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: k
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-          <GhostBtn id="step3-back-btn" label="Back" onClick={onBack} disabled={isGenerating} />
+          <GhostBtn id="step3-back-btn" label="Back" onClick={onBack} disabled={isGenerating} shortcut="Esc" />
           <PrimaryBtn 
             id="generate-cover-letter-btn"
             label={isGenerating ? "Generating Cover Letter..." : "Generate Cover Letter"} 
             onClick={onGenerate} 
             isGenerating={isGenerating}
+            shortcut={`${modKey}+↵`}
             icon={<span>✒️</span>} 
           />
         </div>
@@ -730,8 +745,8 @@ function Toast({ message, visible, onDismiss }: { message: string; visible: bool
   );
 }
 
-function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, copied, showToast, onDismissToast, wordCount, form, refineCount }: {
-  editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; showToast: boolean; onDismissToast: () => void; wordCount: number; form: Form; refineCount: number;
+function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, copied, showToast, onDismissToast, wordCount, form, refineCount, modKey = "Ctrl" }: {
+  editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; showToast: boolean; onDismissToast: () => void; wordCount: number; form: Form; refineCount: number; modKey?: string;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -757,7 +772,10 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
   return (
     <div id="output-view" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
       <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`, background: C.card, display: "flex", alignItems: "center", gap: 16 }}>
-        <button id="back-to-edit-btn" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13 }}>← Edit details</button>
+        <button id="back-to-edit-btn" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>← Edit details</span>
+          <kbd style={{ fontSize: 10, padding: "1px 5px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
+        </button>
         <div style={{ flex: 1 }} />
         <Mono size={10} color={C.dim}>{form.jobTitle || "Cover Letter"} · {form.company}</Mono>
       </div>
@@ -845,15 +863,39 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied!" : "Copy Letter"} onClick={onCopy} />
+            <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied!" : "Copy Letter"} onClick={onCopy} shortcut={`${modKey}+⇧+C`} />
             <GhostBtn 
               id="refine-letter-btn"
               label={maxReached ? "Max Refinements Reached (3/3)" : `✨ Refine & Enhance (${refineCount}/3)`} 
               onClick={onRefine} 
               disabled={maxReached}
+              shortcut={`${modKey}+↵`}
               icon={<span>⚡</span>} 
             />
-            <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} icon={<span>📥</span>} />
+            <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} shortcut={`${modKey}+P`} icon={<span>📥</span>} />
+          </div>
+
+          {/* Quick shortcut cheat sheet in sidebar */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 11, color: C.dim }}>
+            <div style={{ fontWeight: 600, color: C.muted, marginBottom: 6 }}>⚡ Shortcuts</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Copy full letter</span>
+                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Shift+C</kbd>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Refine letter</span>
+                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Enter</kbd>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Print / PDF</span>
+                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+P</kbd>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Back to edit</span>
+                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -887,8 +929,17 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [refineCount, setRefineCount] = useState(0);
+  const [isMac, setIsMac] = useState(false);
   const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setIsMac(typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform));
+    });
+  }, []);
+
+  const modKey = isMac ? "⌘" : "Ctrl";
 
   // Clean up timers on unmount
   useEffect(() => {
@@ -898,7 +949,7 @@ export default function Home() {
     };
   }, []);
 
-  function handleCopy() {
+  const handleCopy = useCallback(() => {
     if (!editable) return;
     navigator.clipboard.writeText(editable);
     setCopied(true);
@@ -914,7 +965,7 @@ export default function Home() {
     toastTimerRef.current = setTimeout(() => {
       setShowToast(false);
     }, 3200);
-  }
+  }, [editable]);
 
   // Load from localStorage safely on mount without cascading renders
   useEffect(() => {
@@ -923,7 +974,7 @@ export default function Home() {
       try {
         const parsed = JSON.parse(saved);
         queueMicrotask(() => setForm(parsed));
-      } catch (e) {
+      } catch {
         // Fallback if JSON is corrupted
       }
     }
@@ -947,7 +998,7 @@ export default function Home() {
     }
   }
 
-  async function handleGenerate(isRefine = false) {
+  const handleGenerate = useCallback(async (isRefine = false) => {
     if (isRefine && refineCount >= 3) return;
     setIsGenerating(true);
 
@@ -970,13 +1021,67 @@ export default function Home() {
         setEditable(`Error: ${data.error}`);
         setStep("output");
       }
-    } catch (e) {
+    } catch {
       setEditable("Network error occurred.");
       setStep("output");
     } finally {
       setIsGenerating(false);
     }
-  }
+  }, [form, editable, refineCount]);
+
+  // Global Keyboard Shortcuts for power users
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMod = e.ctrlKey || e.metaKey;
+
+      // Ctrl/Cmd + Enter: Continue / Generate / Refine
+      if (isMod && e.key === "Enter") {
+        e.preventDefault();
+        if (step === 1) {
+          if (form.jobTitle.trim() && form.company.trim()) {
+            setStep(2);
+          }
+        } else if (step === 2) {
+          if (form.applicantName.trim() && form.background.trim()) {
+            setStep(3);
+          }
+        } else if (step === 3) {
+          if (!isGenerating) {
+            handleGenerate(false);
+          }
+        } else if (step === "output") {
+          if (!isGenerating && refineCount < 3) {
+            handleGenerate(true);
+          }
+        }
+        return;
+      }
+
+      // Ctrl/Cmd + Shift + C: Copy full cover letter
+      if (isMod && e.shiftKey && (e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        if (step === "output") {
+          handleCopy();
+        }
+        return;
+      }
+
+      // Escape: Go back to previous step
+      if (e.key === "Escape" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (step === 2) {
+          setStep(1);
+        } else if (step === 3) {
+          setStep(2);
+        } else if (step === "output") {
+          setStep(3);
+        }
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [step, form, isGenerating, refineCount, editable, handleCopy, handleGenerate]);
 
   const wordCount = editable.trim() ? editable.trim().split(/\s+/).length : 0;
 
@@ -990,9 +1095,14 @@ export default function Home() {
           </div>
           <StepProgress current={step} />
           <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "24px 20px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
-            {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} onClear={handleClear} />}
-            {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} onClear={handleClear} />}
-            {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} isGenerating={isGenerating} />}
+            {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} onClear={handleClear} modKey={modKey} />}
+            {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} onClear={handleClear} modKey={modKey} />}
+            {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} isGenerating={isGenerating} modKey={modKey} />}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 18, display: "flex", justifyContent: "center", alignItems: "center", gap: 14, fontSize: 11, color: C.dim }}>
+            <span><kbd style={{ fontFamily: "'JetBrains Mono', monospace", background: C.card, border: `1px solid ${C.border}`, padding: "1px 5px", borderRadius: 4 }}>{modKey}+Enter</kbd> Next / Generate</span>
+            <span>·</span>
+            <span><kbd style={{ fontFamily: "'JetBrains Mono', monospace", background: C.card, border: `1px solid ${C.border}`, padding: "1px 5px", borderRadius: 4 }}>Esc</kbd> Back</span>
           </div>
         </div>
       ) : (
@@ -1009,6 +1119,7 @@ export default function Home() {
           wordCount={wordCount} 
           form={form} 
           refineCount={refineCount} 
+          modKey={modKey}
         />
       )}
     </div>
