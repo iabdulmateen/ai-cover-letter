@@ -42,6 +42,20 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 @keyframes bar-grow { from { width: 0; } }
 .bar-grow { animation: bar-grow 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
 
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.toast-enter {
+  animation: toast-enter 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes pulse-subtle {
   0%, 100% {
     opacity: 1;

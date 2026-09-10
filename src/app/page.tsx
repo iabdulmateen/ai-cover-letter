@@ -327,8 +327,78 @@ function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: k
   );
 }
 
-function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, copied, wordCount, form, refineCount }: {
-  editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; wordCount: number; form: Form; refineCount: number;
+function Toast({ message, visible, onDismiss }: { message: string; visible: boolean; onDismiss: () => void }) {
+  if (!visible) return null;
+  return (
+    <div
+      id="copy-toast-notification"
+      role="status"
+      aria-live="polite"
+      className="toast-enter"
+      style={{
+        position: "fixed",
+        bottom: 24,
+        right: 24,
+        backgroundColor: "#1a1a2e",
+        color: "#ffffff",
+        padding: "12px 18px",
+        borderRadius: 12,
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0,0,0,0.12)",
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        fontSize: 13,
+        fontWeight: 500,
+        zIndex: 999,
+        border: "1px solid rgba(255, 255, 255, 0.12)",
+        maxWidth: "calc(100vw - 48px)",
+      }}
+    >
+      <div
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          backgroundColor: "#10b981",
+          color: "#ffffff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 12,
+          fontWeight: 700,
+          flexShrink: 0,
+        }}
+      >
+        ✓
+      </div>
+      <span style={{ color: "#f8f8fc", letterSpacing: "-0.01em" }}>{message}</span>
+      <button
+        id="dismiss-toast-btn"
+        onClick={onDismiss}
+        aria-label="Dismiss notification"
+        style={{
+          background: "transparent",
+          border: "none",
+          color: "#9f9fb5",
+          cursor: "pointer",
+          marginLeft: 4,
+          padding: "2px 6px",
+          borderRadius: 4,
+          fontSize: 14,
+          lineHeight: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
+function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, copied, showToast, onDismissToast, wordCount, form, refineCount }: {
+  editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; showToast: boolean; onDismissToast: () => void; wordCount: number; form: Form; refineCount: number;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -469,6 +539,7 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
           )}
         </div>
       </div>
+      <Toast message="Cover letter copied to clipboard" visible={showToast} onDismiss={onDismissToast} />
     </div>
   );
 }
@@ -481,7 +552,36 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [editable, setEditable] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [refineCount, setRefineCount] = useState(0);
+  const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
+  function handleCopy() {
+    if (!editable) return;
+    navigator.clipboard.writeText(editable);
+    setCopied(true);
+    setShowToast(true);
+
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+
+    copyTimerRef.current = setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+
+    toastTimerRef.current = setTimeout(() => {
+      setShowToast(false);
+    }, 3200);
+  }
 
   // Load from localStorage safely on mount without cascading renders
   useEffect(() => {
@@ -554,7 +654,20 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <Output editable={editable} isGenerating={isGenerating} onChange={setEditable} onRefine={() => handleGenerate(true)} onBack={() => setStep(3)} onCopy={() => { navigator.clipboard.writeText(editable); setCopied(true); setTimeout(() => setCopied(false), 2000); }} copied={copied} wordCount={wordCount} form={form} refineCount={refineCount} />
+        <Output 
+          editable={editable} 
+          isGenerating={isGenerating} 
+          onChange={setEditable} 
+          onRefine={() => handleGenerate(true)} 
+          onBack={() => setStep(3)} 
+          onCopy={handleCopy} 
+          copied={copied} 
+          showToast={showToast}
+          onDismissToast={() => setShowToast(false)}
+          wordCount={wordCount} 
+          form={form} 
+          refineCount={refineCount} 
+        />
       )}
     </div>
   );
