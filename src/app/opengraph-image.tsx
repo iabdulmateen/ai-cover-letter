@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "AI Cover Letter - Generate tailored, professional cover letters using AI";
 export const size = {
   width: 1200,

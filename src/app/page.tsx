@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { calculateReadability } from "@/lib/readability";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
 type Len = "brief" | "standard" | "detailed";
@@ -144,10 +145,43 @@ function PrimaryBtn({
   );
 }
 
-function GhostBtn({ label, onClick, disabled, icon }: { label: string; onClick: () => void; disabled?: boolean; icon?: React.ReactNode }) {
+function GhostBtn({ 
+  id,
+  label, 
+  onClick, 
+  disabled, 
+  icon,
+  className = ""
+}: { 
+  id?: string;
+  label: string; 
+  onClick: () => void; 
+  disabled?: boolean; 
+  icon?: React.ReactNode;
+  className?: string;
+}) {
   const active = !disabled;
   return (
-    <button onClick={onClick} disabled={!active} style={{ width: "100%", padding: "12px 20px", borderRadius: 10, border: `1.5px solid ${C.border}`, background: "transparent", color: active ? C.muted : C.dim, fontSize: 14, cursor: active ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+    <button 
+      id={id}
+      onClick={onClick} 
+      disabled={!active} 
+      className={className}
+      style={{ 
+        width: "100%", 
+        padding: "12px 20px", 
+        borderRadius: 10, 
+        border: `1.5px solid ${C.border}`, 
+        background: "transparent", 
+        color: active ? C.muted : C.dim, 
+        fontSize: 14, 
+        cursor: active ? "pointer" : "not-allowed", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        gap: 7 
+      }}
+    >
       {icon}{label}
     </button>
   );
@@ -236,7 +270,15 @@ function Step2({ f, up, onNext, onBack }: { f: Form; up: (k: keyof Form, v: stri
             ))}
           </div>
         )}
-        <Field label="Professional Background" hint="2–3 sentences"><textarea rows={3} style={{ ...INPUT_S, resize: "none" }} placeholder="Brief background summary..." value={f.background} onChange={(e) => up("background", e.target.value)} /></Field>
+        <Field label="Professional Background" hint="2–3 sentences">
+          <textarea id="professional-background-input" rows={3} style={{ ...INPUT_S, resize: "none" }} placeholder="Brief background summary..." value={f.background} onChange={(e) => up("background", e.target.value)} />
+          <div id="background-char-count" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 5, padding: "0 2px" }}>
+            <span style={{ fontSize: 11, color: C.dim }}>Recommended: 100–500 characters</span>
+            <span style={{ fontSize: 11, color: f.background.length > 600 ? "#dc2626" : f.background.length >= 100 ? C.accent : C.dim, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}>
+              {f.background.length} / 500
+            </span>
+          </div>
+        </Field>
         <div style={{ display: "flex", gap: 10 }}>
           <GhostBtn label="Back" onClick={onBack} />
           <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} />
@@ -297,6 +339,7 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
   }, [editable]);
 
   const readTime = wordCount < 100 ? "< 1 min" : `~${Math.max(1, Math.round(wordCount / 200))} min`;
+  const readability = useMemo(() => calculateReadability(editable), [editable]);
 
   function handlePrint() {
     const win = window.open("", "_blank");
@@ -309,9 +352,9 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
   const maxReached = refineCount >= 3;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
+    <div id="output-view" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
       <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`, background: C.card, display: "flex", alignItems: "center", gap: 16 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13 }}>← Edit details</button>
+        <button id="back-to-edit-btn" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13 }}>← Edit details</button>
         <div style={{ flex: 1 }} />
         <Mono size={10} color={C.dim}>{form.jobTitle || "Cover Letter"} · {form.company}</Mono>
       </div>
@@ -319,22 +362,95 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
       <div style={{ flex: 1, display: "flex", flexWrap: "wrap", maxWidth: 1280, margin: "0 auto", width: "100%", padding: "24px 16px", gap: 24, boxSizing: "border-box" }}>
         {/* Sidebar Controls */}
         <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
-            <Mono size={10} color={C.dim}>Letter Stats</Mono>
+          <div id="letter-stats-card" style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <Mono size={10} color={C.dim}>Letter Stats</Mono>
+              <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>LIVE</span>
+            </div>
+            
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}><div style={{ fontSize: 18, fontWeight: 700 }}>{wordCount}</div><div style={{ fontSize: 11, color: C.dim }}>words</div></div>
-              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}><div style={{ fontSize: 18, fontWeight: 700 }}>{readTime}</div><div style={{ fontSize: 11, color: C.dim }}>read time</div></div>
+              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>{wordCount}</div>
+                <div style={{ fontSize: 11, color: C.dim }}>words</div>
+              </div>
+              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>{readTime}</div>
+                <div style={{ fontSize: 11, color: C.dim }}>read time</div>
+              </div>
+            </div>
+
+            {/* Readability Scoring Section */}
+            <div id="readability-section" style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                  <Mono size={10} color={C.accent}>Readability Score</Mono>
+                </div>
+                <span 
+                  style={{ 
+                    fontSize: 11, 
+                    fontWeight: 600, 
+                    color: readability.levelColor,
+                    background: `${readability.levelColor}15`,
+                    padding: "2px 8px",
+                    borderRadius: 12
+                  }}
+                >
+                  {readability.levelLabel}
+                </span>
+              </div>
+
+              {/* Score Display & Progress Bar */}
+              <div style={{ background: C.surface, borderRadius: 10, padding: "12px", marginTop: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+                  <div>
+                    <span style={{ fontSize: 22, fontWeight: 700, color: readability.levelColor }}>{readability.readingEase}</span>
+                    <span style={{ fontSize: 12, color: C.dim }}> / 100</span>
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>
+                    Grade {readability.gradeLevel}
+                  </div>
+                </div>
+
+                {/* Progress track */}
+                <div style={{ width: "100%", height: 6, background: "#e0e0ea", borderRadius: 3, overflow: "hidden" }}>
+                  <div 
+                    style={{ 
+                      width: `${readability.readingEase}%`, 
+                      height: "100%", 
+                      background: readability.levelColor,
+                      borderRadius: 3,
+                      transition: "width 0.4s ease"
+                    }} 
+                  />
+                </div>
+
+                {/* Micro breakdowns */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, fontSize: 11, color: C.muted }}>
+                  <div>
+                    <span style={{ color: C.dim }}>Sentences:</span> <strong>{readability.sentenceCount}</strong>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ color: C.dim }}>Avg sentence:</span> <strong>{readability.avgSentenceLength}w</strong>
+                  </div>
+                </div>
+
+                <p style={{ margin: "8px 0 0", fontSize: 11, lineHeight: 1.4, color: C.muted, fontStyle: "italic" }}>
+                  {readability.qualitySummary}
+                </p>
+              </div>
             </div>
           </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <PrimaryBtn label={copied ? "Copied!" : "Copy Letter"} onClick={onCopy} />
+            <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied!" : "Copy Letter"} onClick={onCopy} />
             <GhostBtn 
+              id="refine-letter-btn"
               label={maxReached ? "Max Refinements Reached (3/3)" : `✨ Refine & Enhance (${refineCount}/3)`} 
               onClick={onRefine} 
               disabled={maxReached}
               icon={<span>⚡</span>} 
             />
-            <GhostBtn label="Print / Download PDF" onClick={handlePrint} icon={<span>📥</span>} />
+            <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} icon={<span>📥</span>} />
           </div>
         </div>
 
