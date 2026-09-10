@@ -2,6 +2,28 @@
 
 import React, { useState, useRef, useEffect, useMemo, useCallback, createContext, useContext } from "react";
 import { calculateReadability } from "@/lib/readability";
+import {
+  Sun,
+  Moon,
+  Trash2,
+  Check,
+  CircleHelp,
+  Briefcase,
+  Rocket,
+  Zap,
+  Palette,
+  Sparkles,
+  Printer,
+  Copy,
+  ArrowLeft,
+  X,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal,
+  FileText,
+  Clock,
+} from "lucide-react";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
 type Len = "brief" | "standard" | "detailed";
@@ -145,7 +167,8 @@ function ThemeToggle() {
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
-        padding: "5px 12px",
+        padding: "6px 12px",
+        minHeight: 36,
         borderRadius: 20,
         border: `1.5px solid ${C.border}`,
         background: C.card,
@@ -157,7 +180,7 @@ function ThemeToggle() {
         boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
       }}
     >
-      <span style={{ fontSize: 13 }}>{isDark ? "🌙" : "☀️"}</span>
+      {isDark ? <Moon size={14} className="text-indigo-400" /> : <Sun size={14} className="text-amber-500" />}
       <span>{isDark ? "Dark" : "Light"}</span>
     </button>
   );
@@ -211,7 +234,8 @@ function PrimaryBtn({
       className={`${isGenerating ? "btn-pulse" : ""} ${className}`.trim()}
       style={{ 
         width: "100%", 
-        padding: "12px 20px", 
+        minHeight: 44,
+        padding: "11px 18px", 
         borderRadius: 10, 
         border: "none", 
         background: isGenerating ? "#4338ca" : active ? C.accent : C.dim, 
@@ -228,14 +252,15 @@ function PrimaryBtn({
     >
       {isGenerating ? (
         <>
-          <span className="inline-block animate-spin" style={{ fontSize: 13 }}>✦</span>
-          {label}
+          <Loader2 size={16} className="animate-spin" />
+          <span>{label}</span>
         </>
       ) : (
         <>
-          {icon}{label}
+          {icon}
+          <span>{label}</span>
           {shortcut && (
-            <kbd style={{ fontSize: 10, padding: "2px 6px", background: "rgba(255,255,255,0.24)", borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, letterSpacing: "0.02em", color: "#ffffff", marginLeft: 4 }}>
+            <kbd style={{ fontSize: 10, padding: "2px 6px", background: "rgba(255,255,255,0.22)", borderRadius: 4, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, letterSpacing: "0.02em", color: "#ffffff", marginLeft: 4 }}>
               {shortcut}
             </kbd>
           )}
@@ -272,12 +297,14 @@ function GhostBtn({
       className={className}
       style={{ 
         width: "100%", 
-        padding: "12px 20px", 
+        minHeight: 44,
+        padding: "11px 18px", 
         borderRadius: 10, 
         border: `1.5px solid ${C.border}`, 
         background: "transparent", 
         color: active ? C.muted : C.dim, 
         fontSize: 14, 
+        fontWeight: 500,
         cursor: active ? "pointer" : "not-allowed", 
         display: "flex", 
         alignItems: "center", 
@@ -285,7 +312,8 @@ function GhostBtn({
         gap: 7 
       }}
     >
-      {icon}{label}
+      {icon}
+      <span>{label}</span>
       {shortcut && (
         <kbd style={{ fontSize: 10, padding: "2px 5px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.dim, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500, letterSpacing: "0.02em", marginLeft: 4 }}>
           {shortcut}
@@ -299,12 +327,12 @@ function StepProgress({ current }: { current: 1 | 2 | 3 }) {
   const { C } = useTheme();
   const steps = [{ n: 1, label: "The Role" }, { n: 2, label: "Your Story" }, { n: 3, label: "Your Style" }];
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: 0, marginBottom: 32, overflowX: "auto", paddingBottom: 8 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 0, marginBottom: 28, overflowX: "auto", paddingBottom: 4 }}>
       {steps.map((s, i) => (
         <div key={s.n} style={{ display: "flex", alignItems: "center", flex: i < steps.length - 1 ? 1 : "none" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
             <div style={{ width: 30, height: 30, borderRadius: "50%", background: s.n <= current ? C.accent : C.progressInactive, color: s.n <= current ? "#fff" : C.dim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600 }}>
-              {s.n < current ? "✓" : s.n}
+              {s.n < current ? <Check size={14} strokeWidth={3} /> : s.n}
             </div>
             <Mono size={9} color={s.n === current ? C.accent : C.dim}>{s.label}</Mono>
           </div>
@@ -345,19 +373,19 @@ function Step1({ f, up, onNext, onClear, modKey = "Ctrl" }: { f: Form; up: (k: k
             onMouseLeave={(e) => (e.currentTarget.style.color = C.dim)}
             title="Reset and clear all form inputs"
           >
-            <span>🗑️</span> Clear All Fields
+            <Trash2 size={13} /> Clear All Fields
           </button>
         )}
       </div>
-      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>What position are you applying for?</h2>
-      <p style={{ fontSize: 13, color: C.muted, marginBottom: 24, lineHeight: 1.6 }}>Pasting the job description helps tailor your letter.</p>
+      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 24, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>What position are you applying for?</h2>
+      <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.6 }}>Pasting the job description helps tailor your letter.</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
           <Field label="Job Title" hint="Required"><input style={inputStyle} placeholder="Frontend Developer" value={f.jobTitle} onChange={(e) => up("jobTitle", e.target.value)} /></Field>
           <Field label="Company" hint="Required"><input style={inputStyle} placeholder="Google" value={f.company} onChange={(e) => up("company", e.target.value)} /></Field>
         </div>
         <Field label="Hiring Manager" hint="Optional"><input style={inputStyle} placeholder="Jordan Lee" value={f.hiringManager} onChange={(e) => up("hiringManager", e.target.value)} /></Field>
-        <Field label="Job Description" hint="Recommended"><textarea rows={5} style={{ ...inputStyle, resize: "none" }} placeholder="Paste job description..." value={f.jobDescription} onChange={(e) => up("jobDescription", e.target.value)} /></Field>
+        <Field label="Job Description" hint="Recommended"><textarea rows={4} style={{ ...inputStyle, resize: "none" }} placeholder="Paste job description..." value={f.jobDescription} onChange={(e) => up("jobDescription", e.target.value)} /></Field>
         <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} shortcut={`${modKey}+↵`} />
       </div>
     </div>
@@ -406,16 +434,16 @@ function Step2({ f, up, onNext, onBack, onClear, modKey = "Ctrl" }: { f: Form; u
             onMouseLeave={(e) => (e.currentTarget.style.color = C.dim)}
             title="Reset and clear all form inputs"
           >
-            <span>🗑️</span> Clear All Fields
+            <Trash2 size={13} /> Clear All Fields
           </button>
         )}
       </div>
-      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Tell us about yourself</h2>
-      <p style={{ fontSize: 13, color: C.muted, marginBottom: 24, lineHeight: 1.6 }}>Add your background and professional skills.</p>
+      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 24, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Tell us about yourself</h2>
+      <p style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.6 }}>Add your background and professional skills.</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>
-          <Field label="Full Name" hint="Required"><input style={inputStyle} placeholder="Abdul Mateen" value={f.applicantName} onChange={(e) => up("applicantName", e.target.value)} /></Field>
-          <Field label="Email" hint="Optional"><input style={inputStyle} type="email" placeholder="email@domain.com" value={f.email} onChange={(e) => up("email", e.target.value)} /></Field>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+          <Field label="Full Name" hint="Required"><input style={inputStyle} placeholder="Alex Morgan" value={f.applicantName} onChange={(e) => up("applicantName", e.target.value)} /></Field>
+          <Field label="Email" hint="Optional"><input style={inputStyle} type="email" placeholder="alex@domain.com" value={f.email} onChange={(e) => up("email", e.target.value)} /></Field>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
           <Field label="Experience"><select style={{ ...inputStyle, cursor: "pointer" }} value={f.yearsExp} onChange={(e) => up("yearsExp", e.target.value)}>{["Under 1 year", "1–2 years", "3–5 years", "5–8 years", "12+ years"].map(o => <option key={o}>{o}</option>)}</select></Field>
@@ -447,7 +475,7 @@ function Step2({ f, up, onNext, onBack, onClear, modKey = "Ctrl" }: { f: Form; u
           </div>
         </Field>
         <div style={{ display: "flex", gap: 10 }}>
-          <GhostBtn label="Back" onClick={onBack} shortcut="Esc" />
+          <GhostBtn label="Back" onClick={onBack} shortcut="Esc" icon={<ArrowLeft size={15} />} />
           <PrimaryBtn label="Continue →" onClick={onNext} disabled={!can} shortcut={`${modKey}+↵`} />
         </div>
       </div>
@@ -460,7 +488,7 @@ const TONE_EXPLANATIONS = [
     key: "professional" as Tone,
     label: "Professional",
     badge: "Most Popular",
-    icon: "💼",
+    Icon: Briefcase,
     bestFor: "Corporate, Finance, Law, Tech Enterprise, Healthcare",
     desc: "Polished, formal, and structured. Emphasizes respect, industry credibility, and a proven track record without colloquialisms.",
     example: "“With over four years of experience leading cross-functional engineering initiatives, I welcome the opportunity to contribute to...”"
@@ -469,7 +497,7 @@ const TONE_EXPLANATIONS = [
     key: "enthusiastic" as Tone,
     label: "Enthusiastic",
     badge: "High Energy",
-    icon: "🚀",
+    Icon: Rocket,
     bestFor: "Startups, Growth-stage Companies, Creative Tech, Non-profits",
     desc: "Vibrant, passionate, and mission-aligned. Conveys genuine excitement about the company’s vision and team culture.",
     example: "“I have long followed Acme’s innovative work in AI tooling and would be thrilled to bring my passion and experience to the team...”"
@@ -478,7 +506,7 @@ const TONE_EXPLANATIONS = [
     key: "concise" as Tone,
     label: "Concise",
     badge: "Fast Read",
-    icon: "⚡",
+    Icon: Zap,
     bestFor: "Busy Hiring Managers, Executive / Lead Roles, Fast-Paced Tech",
     desc: "Short, punchy, and metric-dense. Cuts introductory fluff and presents your top key metrics and achievements right away.",
     example: "“Delivering 35% faster render pipelines and scaling systems to 1M+ MAU, I am positioned to accelerate Acme’s core roadmap...”"
@@ -487,7 +515,7 @@ const TONE_EXPLANATIONS = [
     key: "creative" as Tone,
     label: "Creative",
     badge: "Story-Driven",
-    icon: "🎨",
+    Icon: Palette,
     bestFor: "Design, Marketing, Copywriting, Media, Product Management",
     desc: "Distinctive and narrative-rich. Uses engaging storytelling to frame your problem-solving philosophy and unique perspective.",
     example: "“Designing products isn't just about interface craft — it's about solving the human problem behind every user journey...”"
@@ -598,7 +626,7 @@ function ToneHelpModal({
               flexShrink: 0,
             }}
           >
-            ✕
+            <X size={15} />
           </button>
         </div>
 
@@ -606,6 +634,7 @@ function ToneHelpModal({
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           {TONE_EXPLANATIONS.map((item) => {
             const isSelected = selectedTone === item.key;
+            const IconComp = item.Icon;
             return (
               <div
                 key={item.key}
@@ -628,7 +657,9 @@ function ToneHelpModal({
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 18 }}>{item.icon}</span>
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: C.accentLight, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <IconComp size={16} />
+                    </div>
                     <span style={{ fontSize: 15, fontWeight: 600, color: isSelected ? C.accent : C.ink }}>
                       {item.label}
                     </span>
@@ -638,7 +669,7 @@ function ToneHelpModal({
                   </div>
                   {isSelected && (
                     <span style={{ fontSize: 12, fontWeight: 700, color: C.accent, display: "flex", alignItems: "center", gap: 4 }}>
-                      ✓ Selected
+                      <Check size={14} strokeWidth={3} /> Selected
                     </span>
                   )}
                 </div>
@@ -686,12 +717,17 @@ function ToneHelpModal({
 function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void; isGenerating?: boolean; modKey?: string }) {
   const { C, theme } = useTheme();
   const [showToneHelp, setShowToneHelp] = useState(false);
-  const tones = [{ key: "professional", label: "Professional" }, { key: "enthusiastic", label: "Enthusiastic" }, { key: "concise", label: "Concise" }, { key: "creative", label: "Creative" }];
+  const tones = [
+    { key: "professional", label: "Professional", icon: Briefcase },
+    { key: "enthusiastic", label: "Enthusiastic", icon: Rocket },
+    { key: "concise", label: "Concise", icon: Zap },
+    { key: "creative", label: "Creative", icon: Palette }
+  ];
   const lengths = [{ key: "brief", label: "Brief (~150w)" }, { key: "standard", label: "Standard (~280w)" }, { key: "detailed", label: "Detailed (~380w)" }];
   return (
     <div>
       <Mono size={10} color={C.accent}>Step 3 of 3</Mono>
-      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Choose tone & style</h2>
+      <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 24, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Choose tone & style</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 16 }}>
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
@@ -704,13 +740,8 @@ function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f
                 title="Explain tones"
                 aria-label="Learn about tone options"
                 style={{
-                  background: C.surface,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: "50%",
-                  width: 18,
-                  height: 18,
-                  fontSize: 11,
-                  fontWeight: 600,
+                  background: "none",
+                  border: "none",
                   color: C.accent,
                   cursor: "pointer",
                   display: "inline-flex",
@@ -721,7 +752,7 @@ function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f
                   transition: "all 0.15s ease",
                 }}
               >
-                ?
+                <CircleHelp size={16} />
               </button>
             </div>
             <button
@@ -742,9 +773,35 @@ function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f
             </button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
-            {tones.map(t => (
-              <button key={t.key} id={`tone-btn-${t.key}`} disabled={isGenerating} onClick={() => up("tone", t.key as Tone)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.tone === t.key ? C.accent : C.border}`, background: f.tone === t.key ? C.accentLight : C.card, color: f.tone === t.key ? (theme === "dark" ? "#e0e7ff" : C.accent) : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{t.label}</button>
-            ))}
+            {tones.map(t => {
+              const IconComp = t.icon;
+              const isSel = f.tone === t.key;
+              return (
+                <button 
+                  key={t.key} 
+                  id={`tone-btn-${t.key}`} 
+                  disabled={isGenerating} 
+                  onClick={() => up("tone", t.key as Tone)} 
+                  style={{ 
+                    padding: "12px", 
+                    borderRadius: 10, 
+                    border: `1.5px solid ${isSel ? C.accent : C.border}`, 
+                    background: isSel ? C.accentLight : C.card, 
+                    color: isSel ? (theme === "dark" ? "#e0e7ff" : C.accent) : C.ink, 
+                    fontWeight: 600, 
+                    fontSize: 13, 
+                    cursor: isGenerating ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6
+                  }}
+                >
+                  <IconComp size={15} />
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
         <div>
@@ -756,14 +813,14 @@ function Step3({ f, up, onGenerate, onBack, isGenerating, modKey = "Ctrl" }: { f
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-          <GhostBtn id="step3-back-btn" label="Back" onClick={onBack} disabled={isGenerating} shortcut="Esc" />
+          <GhostBtn id="step3-back-btn" label="Back" onClick={onBack} disabled={isGenerating} shortcut="Esc" icon={<ArrowLeft size={15} />} />
           <PrimaryBtn 
             id="generate-cover-letter-btn"
             label={isGenerating ? "Generating Cover Letter..." : "Generate Cover Letter"} 
             onClick={onGenerate} 
             isGenerating={isGenerating}
             shortcut={`${modKey}+↵`}
-            icon={<span>✒️</span>} 
+            icon={<Sparkles size={16} />} 
           />
         </div>
       </div>
@@ -820,7 +877,7 @@ function Toast({ message, visible, onDismiss }: { message: string; visible: bool
           flexShrink: 0,
         }}
       >
-        ✓
+        <Check size={14} strokeWidth={3} />
       </div>
       <span style={{ color: "#f8f8fc", letterSpacing: "-0.01em" }}>{message}</span>
       <button
@@ -842,7 +899,7 @@ function Toast({ message, visible, onDismiss }: { message: string; visible: bool
           justifyContent: "center",
         }}
       >
-        ✕
+        <X size={14} />
       </button>
     </div>
   );
@@ -852,12 +909,14 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
   editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; showToast: boolean; onDismissToast: () => void; wordCount: number; form: Form; refineCount: number; modKey?: string;
 }) {
   const { C } = useTheme();
+  const [showStatsDrawer, setShowStatsDrawer] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
+
   useEffect(() => {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = ta.scrollHeight + "px";
+    ta.style.height = Math.max(380, ta.scrollHeight) + "px";
   }, [editable]);
 
   const readTime = wordCount < 100 ? "< 1 min" : `~${Math.max(1, Math.round(wordCount / 200))} min`;
@@ -873,152 +932,308 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
 
   const maxReached = refineCount >= 3;
 
-  return (
-    <div id="output-view" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
-      <div style={{ padding: "12px 20px", borderBottom: `1px solid ${C.border}`, background: C.card, display: "flex", alignItems: "center", gap: 16 }}>
-        <button id="back-to-edit-btn" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-          <span>← Edit details</span>
-          <kbd style={{ fontSize: 10, padding: "1px 5px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
-        </button>
-        <div style={{ flex: 1 }} />
-        <Mono size={10} color={C.dim}>{form.jobTitle || "Cover Letter"} · {form.company}</Mono>
-        <ThemeToggle />
+  const statsCardContent = (
+    <div id="letter-stats-card" style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Mono size={10} color={C.dim}>Letter Stats</Mono>
+        <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>LIVE</span>
+      </div>
+      
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
+        <div style={{ background: C.surface, borderRadius: 8, padding: "10px", display: "flex", alignItems: "center", gap: 10 }}>
+          <FileText size={18} className="text-indigo-500 shrink-0" />
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink, lineHeight: 1.1 }}>{wordCount}</div>
+            <div style={{ fontSize: 11, color: C.dim }}>words</div>
+          </div>
+        </div>
+        <div style={{ background: C.surface, borderRadius: 8, padding: "10px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Clock size={18} className="text-amber-500 shrink-0" />
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink, lineHeight: 1.1 }}>{readTime}</div>
+            <div style={{ fontSize: 11, color: C.dim }}>read time</div>
+          </div>
+        </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexWrap: "wrap", maxWidth: 1280, margin: "0 auto", width: "100%", padding: "24px 16px", gap: 24, boxSizing: "border-box" }}>
-        {/* Sidebar Controls */}
-        <div style={{ flex: "1 1 280px", display: "flex", flexDirection: "column", gap: 16 }}>
-          <div id="letter-stats-card" style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "16px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Mono size={10} color={C.dim}>Letter Stats</Mono>
-              <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>LIVE</span>
+      {/* Readability Scoring Section */}
+      <div id="readability-section" style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <Mono size={10} color={C.accent}>Readability</Mono>
+          </div>
+          <span 
+            style={{ 
+              fontSize: 11, 
+              fontWeight: 600, 
+              color: readability.levelColor,
+              background: `${readability.levelColor}18`,
+              padding: "2px 8px",
+              borderRadius: 12
+            }}
+          >
+            {readability.levelLabel}
+          </span>
+        </div>
+
+        {/* Score Display & Progress Bar */}
+        <div style={{ background: C.surface, borderRadius: 10, padding: "12px", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
+            <div>
+              <span style={{ fontSize: 20, fontWeight: 700, color: readability.levelColor }}>{readability.readingEase}</span>
+              <span style={{ fontSize: 11, color: C.dim }}> / 100</span>
             </div>
-            
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10 }}>
-              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: C.ink }}>{wordCount}</div>
-                <div style={{ fontSize: 11, color: C.dim }}>words</div>
-              </div>
-              <div style={{ background: C.surface, borderRadius: 8, padding: "10px" }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: C.ink }}>{readTime}</div>
-                <div style={{ fontSize: 11, color: C.dim }}>read time</div>
-              </div>
-            </div>
-
-            {/* Readability Scoring Section */}
-            <div id="readability-section" style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Mono size={10} color={C.accent}>Readability Score</Mono>
-                </div>
-                <span 
-                  style={{ 
-                    fontSize: 11, 
-                    fontWeight: 600, 
-                    color: readability.levelColor,
-                    background: `${readability.levelColor}18`,
-                    padding: "2px 8px",
-                    borderRadius: 12
-                  }}
-                >
-                  {readability.levelLabel}
-                </span>
-              </div>
-
-              {/* Score Display & Progress Bar */}
-              <div style={{ background: C.surface, borderRadius: 10, padding: "12px", marginTop: 4 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-                  <div>
-                    <span style={{ fontSize: 22, fontWeight: 700, color: readability.levelColor }}>{readability.readingEase}</span>
-                    <span style={{ fontSize: 12, color: C.dim }}> / 100</span>
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>
-                    Grade {readability.gradeLevel}
-                  </div>
-                </div>
-
-                {/* Progress track */}
-                <div style={{ width: "100%", height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
-                  <div 
-                    style={{ 
-                      width: `${readability.readingEase}%`, 
-                      height: "100%", 
-                      background: readability.levelColor,
-                      borderRadius: 3,
-                      transition: "width 0.4s ease"
-                    }} 
-                  />
-                </div>
-
-                {/* Micro breakdowns */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, fontSize: 11, color: C.muted }}>
-                  <div>
-                    <span style={{ color: C.dim }}>Sentences:</span> <strong style={{ color: C.ink }}>{readability.sentenceCount}</strong>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span style={{ color: C.dim }}>Avg sentence:</span> <strong style={{ color: C.ink }}>{readability.avgSentenceLength}w</strong>
-                  </div>
-                </div>
-
-                <p style={{ margin: "8px 0 0", fontSize: 11, lineHeight: 1.4, color: C.muted, fontStyle: "italic" }}>
-                  {readability.qualitySummary}
-                </p>
-              </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>
+              Grade {readability.gradeLevel}
             </div>
           </div>
 
+          <div style={{ width: "100%", height: 6, background: C.border, borderRadius: 3, overflow: "hidden" }}>
+            <div 
+              style={{ 
+                width: `${readability.readingEase}%`, 
+                height: "100%", 
+                background: readability.levelColor,
+                borderRadius: 3,
+                transition: "width 0.4s ease"
+              }} 
+            />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10, fontSize: 11, color: C.muted }}>
+            <div>
+              <span style={{ color: C.dim }}>Sentences:</span> <strong style={{ color: C.ink }}>{readability.sentenceCount}</strong>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <span style={{ color: C.dim }}>Avg length:</span> <strong style={{ color: C.ink }}>{readability.avgSentenceLength}w</strong>
+            </div>
+          </div>
+
+          <p style={{ margin: "8px 0 0", fontSize: 11, lineHeight: 1.4, color: C.muted, fontStyle: "italic" }}>
+            {readability.qualitySummary}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const shortcutGuide = (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 11, color: C.dim }}>
+      <div style={{ fontWeight: 600, color: C.muted, marginBottom: 6, display: "flex", alignItems: "center", gap: 5 }}>
+        <Zap size={13} className="text-amber-500" />
+        <span>Keyboard Shortcuts</span>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Copy full letter</span>
+          <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Shift+C</kbd>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Refine letter</span>
+          <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Enter</kbd>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Print / PDF</span>
+          <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+P</kbd>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Back to edit</span>
+          <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div id="output-view" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: C.surface }}>
+      {/* Top Navigation Bar */}
+      <div style={{ padding: "10px 16px", borderBottom: `1px solid ${C.border}`, background: C.card, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "nowrap" }}>
+        <button id="back-to-edit-btn" onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: "6px 8px", borderRadius: 8 }}>
+          <ArrowLeft size={16} />
+          <span className="hidden sm:inline">Edit details</span>
+          <kbd className="hidden sm:inline-block" style={{ fontSize: 10, padding: "1px 5px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
+        </button>
+
+        <div style={{ flex: 1, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", padding: "0 8px" }}>
+          <Mono size={10} color={C.dim}>{form.jobTitle || "Cover Letter"} · {form.company}</Mono>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <ThemeToggle />
+        </div>
+      </div>
+
+      {/* Mobile Sticky / Compact Action Bar */}
+      <div className="md:hidden" style={{ padding: "8px 12px", background: C.card, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 8, overflowX: "auto" }}>
+        <button
+          id="mobile-copy-btn"
+          onClick={onCopy}
+          style={{
+            flex: "1 1 auto",
+            minHeight: 40,
+            padding: "8px 14px",
+            borderRadius: 8,
+            border: "none",
+            background: copied ? "#10b981" : C.accent,
+            color: "#ffffff",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+          }}
+        >
+          {copied ? <Check size={15} strokeWidth={3} /> : <Copy size={15} />}
+          <span>{copied ? "Copied!" : "Copy"}</span>
+        </button>
+
+        <button
+          id="mobile-refine-btn"
+          onClick={onRefine}
+          disabled={maxReached || isGenerating}
+          style={{
+            flex: "1 1 auto",
+            minHeight: 40,
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: `1.5px solid ${C.border}`,
+            background: "transparent",
+            color: maxReached ? C.dim : C.ink,
+            fontSize: 13,
+            fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            cursor: maxReached || isGenerating ? "not-allowed" : "pointer",
+            whiteSpace: "nowrap"
+          }}
+        >
+          <Sparkles size={14} className="text-amber-500" />
+          <span>Refine ({refineCount}/3)</span>
+        </button>
+
+        <button
+          id="mobile-print-btn"
+          onClick={handlePrint}
+          aria-label="Print or download PDF"
+          title="Print or PDF"
+          style={{
+            minHeight: 40,
+            minWidth: 40,
+            padding: "8px",
+            borderRadius: 8,
+            border: `1.5px solid ${C.border}`,
+            background: "transparent",
+            color: C.muted,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer"
+          }}
+        >
+          <Printer size={16} />
+        </button>
+
+        <button
+          id="mobile-toggle-stats-btn"
+          onClick={() => setShowStatsDrawer(prev => !prev)}
+          aria-label="Toggle stats and readability breakdown"
+          title="Letter Stats"
+          style={{
+            minHeight: 40,
+            padding: "8px 10px",
+            borderRadius: 8,
+            border: `1.5px solid ${showStatsDrawer ? C.accent : C.border}`,
+            background: showStatsDrawer ? C.accentLight : "transparent",
+            color: showStatsDrawer ? C.accent : C.muted,
+            fontSize: 12,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+          }}
+        >
+          <SlidersHorizontal size={14} />
+          <span>Stats</span>
+          {showStatsDrawer ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </button>
+      </div>
+
+      {/* Mobile Collapsible Stats Drawer */}
+      {showStatsDrawer && (
+        <div className="md:hidden" style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 12 }}>
+          {statsCardContent}
+          {shortcutGuide}
+        </div>
+      )}
+
+      {/* Main Content Workspace */}
+      <div style={{ flex: 1, display: "flex", flexWrap: "wrap", maxWidth: 1280, margin: "0 auto", width: "100%", padding: "16px", gap: 20, boxSizing: "border-box" }}>
+        {/* Desktop Sidebar Controls (Hidden on mobile to maximize editor canvas) */}
+        <div className="hidden md:flex" style={{ flex: "1 1 300px", maxWidth: 340, flexDirection: "column", gap: 16 }}>
+          {statsCardContent}
+
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied!" : "Copy Letter"} onClick={onCopy} shortcut={`${modKey}+⇧+C`} />
+            <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied to Clipboard!" : "Copy Full Letter"} onClick={onCopy} shortcut={`${modKey}+⇧+C`} icon={copied ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />} />
             <GhostBtn 
               id="refine-letter-btn"
-              label={maxReached ? "Max Refinements Reached (3/3)" : `✨ Refine & Enhance (${refineCount}/3)`} 
+              label={maxReached ? "Max Refinements (3/3)" : `Refine & Enhance (${refineCount}/3)`} 
               onClick={onRefine} 
               disabled={maxReached}
               shortcut={`${modKey}+↵`}
-              icon={<span>⚡</span>} 
+              icon={<Sparkles size={16} className="text-amber-500" />} 
             />
-            <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} shortcut={`${modKey}+P`} icon={<span>📥</span>} />
+            <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} shortcut={`${modKey}+P`} icon={<Printer size={16} />} />
           </div>
 
-          {/* Quick shortcut cheat sheet in sidebar */}
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: "10px 12px", fontSize: 11, color: C.dim }}>
-            <div style={{ fontWeight: 600, color: C.muted, marginBottom: 6 }}>⚡ Shortcuts</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Copy full letter</span>
-                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Shift+C</kbd>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Refine letter</span>
-                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+Enter</kbd>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Print / PDF</span>
-                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>{modKey}+P</kbd>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span>Back to edit</span>
-                <kbd style={{ fontFamily: "'JetBrains Mono', monospace" }}>Esc</kbd>
-              </div>
-            </div>
-          </div>
+          {shortcutGuide}
         </div>
 
-        {/* Main Editor Canvas / Skeleton Loader */}
-        <div style={{ flex: "2 1 500px", background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "32px 24px", boxSizing: "border-box", minHeight: 400 }}>
+        {/* Main Editor Canvas */}
+        <div style={{ flex: "2 1 480px", background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "20px 16px", boxSizing: "border-box", minHeight: "calc(100vh - 170px)", display: "flex", flexDirection: "column", boxShadow: "0 2px 12px rgba(0,0,0,0.03)" }}>
           {isGenerating ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "40px 0" }}>
-              <div style={{ height: 24, background: C.skeletonBg, borderRadius: 6, width: "60%", animation: "pulse 1.5s infinite" }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "40px 12px", alignItems: "center" }}>
+              <div style={{ height: 24, background: C.skeletonBg, borderRadius: 6, width: "70%", animation: "pulse 1.5s infinite" }} />
               <div style={{ height: 16, background: C.skeletonBg, borderRadius: 6, width: "100%", animation: "pulse 1.5s infinite" }} />
-              <div style={{ height: 16, background: C.skeletonBg, borderRadius: 6, width: "90%", animation: "pulse 1.5s infinite" }} />
               <div style={{ height: 16, background: C.skeletonBg, borderRadius: 6, width: "95%", animation: "pulse 1.5s infinite" }} />
-              <p style={{ textAlign: "center", color: C.muted, fontSize: 13, marginTop: 20 }}>Generating tailored AI cover letter...</p>
+              <div style={{ height: 16, background: C.skeletonBg, borderRadius: 6, width: "90%", animation: "pulse 1.5s infinite" }} />
+              <div style={{ height: 16, background: C.skeletonBg, borderRadius: 6, width: "98%", animation: "pulse 1.5s infinite" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, color: C.accent, fontSize: 13, fontWeight: 500 }}>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Crafting tailored AI cover letter...</span>
+              </div>
             </div>
           ) : (
-            <textarea ref={taRef} value={editable} onChange={(e) => onChange(e.target.value)} style={{ width: "100%", border: "none", background: "transparent", resize: "none", fontFamily: "'Lora', Georgia, serif", fontSize: 15, lineHeight: 1.8, color: C.ink, outline: "none", boxSizing: "border-box" }} />
+            <textarea 
+              ref={taRef} 
+              value={editable} 
+              onChange={(e) => onChange(e.target.value)} 
+              placeholder="Your generated cover letter will appear here..."
+              style={{ 
+                width: "100%", 
+                flex: 1, 
+                border: "none", 
+                background: "transparent", 
+                resize: "none", 
+                fontFamily: "'Lora', Georgia, serif", 
+                fontSize: 15, 
+                lineHeight: 1.85, 
+                color: C.ink, 
+                outline: "none", 
+                boxSizing: "border-box",
+                padding: "4px"
+              }} 
+            />
           )}
         </div>
       </div>
+
       <Toast message="Cover letter copied to clipboard" visible={showToast} onDismiss={onDismissToast} />
     </div>
   );
@@ -1069,7 +1284,7 @@ export default function Home() {
 
   const C = THEMES[theme];
 
-  // Sync document body background for complete immersion
+  // Sync document body background
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.body.style.backgroundColor = C.surface;
@@ -1111,7 +1326,7 @@ export default function Home() {
     }, 3200);
   }, [editable]);
 
-  // Load from localStorage safely on mount without cascading renders
+  // Load from localStorage safely on mount
   useEffect(() => {
     const saved = localStorage.getItem("lettercraft_form");
     if (saved) {
@@ -1119,7 +1334,7 @@ export default function Home() {
         const parsed = JSON.parse(saved);
         queueMicrotask(() => setForm(parsed));
       } catch {
-        // Fallback if JSON is corrupted
+        // Fallback
       }
     }
   }, []);
@@ -1158,7 +1373,7 @@ export default function Home() {
         if (isRefine) {
           setRefineCount(prev => prev + 1);
         } else {
-          setRefineCount(0); // Reset on fresh generation
+          setRefineCount(0);
           setStep("output");
         }
       } else {
@@ -1173,12 +1388,11 @@ export default function Home() {
     }
   }, [form, editable, refineCount]);
 
-  // Global Keyboard Shortcuts for power users
+  // Global Keyboard Shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const isMod = e.ctrlKey || e.metaKey;
 
-      // Ctrl/Cmd + Enter: Continue / Generate / Refine
       if (isMod && e.key === "Enter") {
         e.preventDefault();
         if (step === 1) {
@@ -1201,7 +1415,6 @@ export default function Home() {
         return;
       }
 
-      // Ctrl/Cmd + Shift + C: Copy full cover letter
       if (isMod && e.shiftKey && (e.key === "c" || e.key === "C")) {
         e.preventDefault();
         if (step === "output") {
@@ -1210,7 +1423,6 @@ export default function Home() {
         return;
       }
 
-      // Escape: Go back to previous step
       if (e.key === "Escape" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         if (step === 2) {
           setStep(1);
@@ -1233,8 +1445,8 @@ export default function Home() {
     <ThemeContext.Provider value={{ theme, toggleTheme, C }}>
       <div style={{ minHeight: "100vh", background: C.surface, color: C.ink, boxSizing: "border-box", transition: "background-color 0.2s ease, color 0.2s ease" }}>
         {step !== "output" ? (
-          <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 16px", boxSizing: "border-box" }}>
-            <div style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ maxWidth: 640, margin: "0 auto", padding: "28px 16px", boxSizing: "border-box" }}>
+            <div style={{ marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontWeight: 700, fontSize: 17, color: C.ink, letterSpacing: "-0.02em" }}>lettercraft</span>
                 <Mono size={9} color={C.dim}>AI COVER LETTER</Mono>
@@ -1242,7 +1454,7 @@ export default function Home() {
               <ThemeToggle />
             </div>
             <StepProgress current={step} />
-            <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "24px 20px", boxShadow: theme === "dark" ? "0 4px 24px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
+            <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "22px 18px", boxShadow: theme === "dark" ? "0 4px 24px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
               {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} onClear={handleClear} modKey={modKey} />}
               {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} onClear={handleClear} modKey={modKey} />}
               {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} isGenerating={isGenerating} modKey={modKey} />}
