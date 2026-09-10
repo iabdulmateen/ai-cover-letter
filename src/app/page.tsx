@@ -24,6 +24,8 @@ import {
   FileText,
   Clock,
   Mail,
+  History,
+  RotateCcw,
 } from "lucide-react";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
@@ -31,6 +33,17 @@ type Len = "brief" | "standard" | "detailed";
 type Opening = "direct" | "hook" | "story";
 type Step = 1 | 2 | 3 | "output";
 export type Theme = "light" | "dark";
+
+export interface LetterHistoryItem {
+  id: string;
+  timestamp: number;
+  jobTitle: string;
+  company: string;
+  applicantName: string;
+  tone: Tone;
+  content: string;
+  wordCount: number;
+}
 
 export interface ColorScheme {
   ink: string;
@@ -906,8 +919,207 @@ function Toast({ message, visible, onDismiss }: { message: string; visible: bool
   );
 }
 
-function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, copied, showToast, onDismissToast, wordCount, form, refineCount, modKey = "Ctrl" }: {
-  editable: string; isGenerating: boolean; onChange: (v: string) => void; onRefine: () => void; onBack: () => void; onCopy: () => void; copied: boolean; showToast: boolean; onDismissToast: () => void; wordCount: number; form: Form; refineCount: number; modKey?: string;
+function formatTimeAgo(timestamp: number): string {
+  const diffSec = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (diffSec < 45) return "Just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return new Date(timestamp).toLocaleDateString([], { month: "short", day: "numeric" });
+}
+
+function HistoryCard({
+  history,
+  activeContent,
+  onSelect,
+  onClear,
+}: {
+  history: LetterHistoryItem[];
+  activeContent: string;
+  onSelect: (item: LetterHistoryItem) => void;
+  onClear: () => void;
+}) {
+  const { C, theme } = useTheme();
+
+  if (!history || history.length === 0) {
+    return (
+      <div
+        id="history-empty-card"
+        style={{
+          background: C.card,
+          border: `1.5px solid ${C.border}`,
+          borderRadius: 14,
+          padding: "14px 16px",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <History size={14} className="text-indigo-500" />
+            <Mono size={10} color={C.dim}>Recent History</Mono>
+          </div>
+          <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace" }}>0/3</span>
+        </div>
+        <p style={{ fontSize: 12, color: C.dim, margin: 0, lineHeight: 1.4 }}>
+          Your last 3 generated letters will appear here for fast switching.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      id="history-card"
+      style={{
+        background: C.card,
+        border: `1.5px solid ${C.border}`,
+        borderRadius: 14,
+        padding: "16px",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <History size={14} className="text-indigo-500" />
+          <Mono size={10} color={C.accent}>Recent Iterations</Mono>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600 }}>
+            {history.length}/3 SAVED
+          </span>
+          <button
+            id="clear-history-btn"
+            type="button"
+            onClick={onClear}
+            title="Clear saved letter history"
+            aria-label="Clear letter history"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: C.dim,
+              cursor: "pointer",
+              padding: "2px",
+              display: "flex",
+              alignItems: "center",
+              lineHeight: 1,
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = C.dim)}
+          >
+            <Trash2 size={12} />
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {history.map((item, index) => {
+          const isActive = item.content.trim() === activeContent.trim();
+          return (
+            <div
+              key={item.id || index}
+              id={`history-item-${index}`}
+              onClick={() => onSelect(item)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(item);
+                }
+              }}
+              style={{
+                background: isActive ? C.selectedCardBg : C.surface,
+                border: `1.5px solid ${isActive ? C.accent : C.border}`,
+                borderRadius: 10,
+                padding: "9px 12px",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 6 }}>
+                <span
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: isActive ? C.accent : C.ink,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    maxWidth: 180,
+                  }}
+                >
+                  {item.jobTitle || "Cover Letter"}
+                </span>
+                <span style={{ fontSize: 10, color: C.dim, fontFamily: "'JetBrains Mono', monospace", flexShrink: 0 }}>
+                  {formatTimeAgo(item.timestamp)}
+                </span>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
+                <span style={{ color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 130 }}>
+                  {item.company || "Company"}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ color: C.dim, fontSize: 10.5 }}>{item.wordCount}w</span>
+                  {isActive ? (
+                    <span style={{ color: C.accent, fontWeight: 700, display: "flex", alignItems: "center", gap: 2, fontSize: 10.5 }}>
+                      <Check size={11} strokeWidth={3} /> Active
+                    </span>
+                  ) : (
+                    <span style={{ color: theme === "dark" ? "#818cf8" : C.accent, fontSize: 10.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 2 }}>
+                      <RotateCcw size={10} /> Load
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function Output({ 
+  editable, 
+  isGenerating, 
+  onChange, 
+  onRefine, 
+  onBack, 
+  onCopy, 
+  copied, 
+  showToast, 
+  toastMessage,
+  onDismissToast, 
+  wordCount, 
+  form, 
+  refineCount, 
+  history,
+  onSelectHistory,
+  onClearHistory,
+  modKey = "Ctrl" 
+}: {
+  editable: string; 
+  isGenerating: boolean; 
+  onChange: (v: string) => void; 
+  onRefine: () => void; 
+  onBack: () => void; 
+  onCopy: () => void; 
+  copied: boolean; 
+  showToast: boolean; 
+  toastMessage?: string;
+  onDismissToast: () => void; 
+  wordCount: number; 
+  form: Form; 
+  refineCount: number; 
+  history: LetterHistoryItem[];
+  onSelectHistory: (item: LetterHistoryItem) => void;
+  onClearHistory: () => void;
+  modKey?: string;
 }) {
   const { C } = useTheme();
   const [showStatsDrawer, setShowStatsDrawer] = useState(false);
@@ -1206,6 +1418,7 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
       {showStatsDrawer && (
         <div className="md:hidden" style={{ padding: "12px 16px", background: C.surface, borderBottom: `1px solid ${C.border}`, display: "flex", flexDirection: "column", gap: 12 }}>
           {statsCardContent}
+          <HistoryCard history={history} activeContent={editable} onSelect={onSelectHistory} onClear={onClearHistory} />
           {shortcutGuide}
         </div>
       )}
@@ -1215,6 +1428,8 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
         {/* Desktop Sidebar Controls (Hidden on mobile to maximize editor canvas) */}
         <div className="hidden md:flex" style={{ flex: "1 1 300px", maxWidth: 340, flexDirection: "column", gap: 16 }}>
           {statsCardContent}
+
+          <HistoryCard history={history} activeContent={editable} onSelect={onSelectHistory} onClear={onClearHistory} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <PrimaryBtn id="copy-letter-btn" label={copied ? "Copied to Clipboard!" : "Copy Full Letter"} onClick={onCopy} shortcut={`${modKey}+⇧+C`} icon={copied ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />} />
@@ -1272,7 +1487,7 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
         </div>
       </div>
 
-      <Toast message="Cover letter copied to clipboard" visible={showToast} onDismiss={onDismissToast} />
+      <Toast message={toastMessage || "Cover letter copied to clipboard"} visible={showToast} onDismiss={onDismissToast} />
     </div>
   );
 }
@@ -1287,8 +1502,10 @@ export default function Home() {
   const [editable, setEditable] = useState("");
   const [copied, setCopied] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("Cover letter copied to clipboard");
   const [refineCount, setRefineCount] = useState(0);
   const [isMac, setIsMac] = useState(false);
+  const [history, setHistory] = useState<LetterHistoryItem[]>([]);
   const copyTimerRef = useRef<NodeJS.Timeout | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1301,6 +1518,23 @@ export default function Home() {
           setTheme(savedTheme);
         } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
           setTheme("dark");
+        }
+      } catch {
+        // ignore
+      }
+    });
+  }, []);
+
+  // Load history safely on mount
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const savedHistory = localStorage.getItem("lettercraft_history");
+        if (savedHistory) {
+          const parsed = JSON.parse(savedHistory);
+          if (Array.isArray(parsed)) {
+            setHistory(parsed.slice(0, 3));
+          }
         }
       } catch {
         // ignore
@@ -1346,23 +1580,70 @@ export default function Home() {
     };
   }, []);
 
+  const triggerToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setShowToast(true);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => {
+      setShowToast(false);
+    }, 3200);
+  }, []);
+
   const handleCopy = useCallback(() => {
     if (!editable) return;
     navigator.clipboard.writeText(editable);
     setCopied(true);
-    setShowToast(true);
+    triggerToast("Cover letter copied to clipboard");
 
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-
     copyTimerRef.current = setTimeout(() => {
       setCopied(false);
     }, 2000);
+  }, [editable, triggerToast]);
 
-    toastTimerRef.current = setTimeout(() => {
-      setShowToast(false);
-    }, 3200);
-  }, [editable]);
+  const saveToHistory = useCallback((content: string, currentForm: Form) => {
+    if (!content || content.startsWith("Error:") || content.startsWith("Network error")) return;
+    const wordCnt = content.trim().split(/\s+/).length;
+    const newItem: LetterHistoryItem = {
+      id: `letter_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: Date.now(),
+      jobTitle: currentForm.jobTitle.trim() || "Cover Letter",
+      company: currentForm.company.trim() || "Company",
+      applicantName: currentForm.applicantName.trim() || "Applicant",
+      tone: currentForm.tone,
+      content,
+      wordCount: wordCnt,
+    };
+
+    setHistory((prev) => {
+      if (prev.length > 0 && prev[0].content === content) {
+        return prev;
+      }
+      const updated = [newItem, ...prev.filter((item) => item.content !== content)].slice(0, 3);
+      try {
+        localStorage.setItem("lettercraft_history", JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    setHistory([]);
+    try {
+      localStorage.removeItem("lettercraft_history");
+    } catch {
+      // ignore
+    }
+    triggerToast("Saved history cleared");
+  }, [triggerToast]);
+
+  const handleSelectHistory = useCallback((item: LetterHistoryItem) => {
+    setEditable(item.content);
+    setStep("output");
+    triggerToast(`Loaded: ${item.jobTitle} · ${item.company}`);
+  }, [triggerToast]);
 
   // Load from localStorage safely on mount
   useEffect(() => {
@@ -1408,6 +1689,7 @@ export default function Home() {
       const data = await res.json();
       if (data.success) {
         setEditable(data.data);
+        saveToHistory(data.data, form);
         if (isRefine) {
           setRefineCount(prev => prev + 1);
         } else {
@@ -1424,7 +1706,7 @@ export default function Home() {
     } finally {
       setIsGenerating(false);
     }
-  }, [form, editable, refineCount]);
+  }, [form, editable, refineCount, saveToHistory]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -1489,7 +1771,32 @@ export default function Home() {
                 <span style={{ fontWeight: 700, fontSize: 17, color: C.ink, letterSpacing: "-0.02em" }}>lettercraft</span>
                 <Mono size={9} color={C.dim}>AI COVER LETTER</Mono>
               </div>
-              <ThemeToggle />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {history.length > 0 && (
+                  <button
+                    id="header-recent-history-btn"
+                    onClick={() => handleSelectHistory(history[0])}
+                    title="View last generated letter"
+                    style={{
+                      background: C.card,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 8,
+                      padding: "5px 10px",
+                      fontSize: 12,
+                      color: C.accent,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontWeight: 600,
+                    }}
+                  >
+                    <History size={13} />
+                    <span>Recent ({history.length})</span>
+                  </button>
+                )}
+                <ThemeToggle />
+              </div>
             </div>
             <StepProgress current={step} />
             <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "22px 18px", boxShadow: theme === "dark" ? "0 4px 24px rgba(0,0,0,0.35)" : "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
@@ -1513,10 +1820,14 @@ export default function Home() {
             onCopy={handleCopy} 
             copied={copied} 
             showToast={showToast}
+            toastMessage={toastMessage}
             onDismissToast={() => setShowToast(false)}
             wordCount={wordCount} 
             form={form} 
             refineCount={refineCount} 
+            history={history}
+            onSelectHistory={handleSelectHistory}
+            onClearHistory={handleClearHistory}
             modKey={modKey}
           />
         )}
