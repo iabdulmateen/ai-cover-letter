@@ -288,7 +288,234 @@ function Step2({ f, up, onNext, onBack }: { f: Form; up: (k: keyof Form, v: stri
   );
 }
 
+const TONE_EXPLANATIONS = [
+  {
+    key: "professional" as Tone,
+    label: "Professional",
+    badge: "Most Popular",
+    icon: "💼",
+    bestFor: "Corporate, Finance, Law, Tech Enterprise, Healthcare",
+    desc: "Polished, formal, and structured. Emphasizes respect, industry credibility, and a proven track record without colloquialisms.",
+    example: "“With over four years of experience leading cross-functional engineering initiatives, I welcome the opportunity to contribute to...”"
+  },
+  {
+    key: "enthusiastic" as Tone,
+    label: "Enthusiastic",
+    badge: "High Energy",
+    icon: "🚀",
+    bestFor: "Startups, Growth-stage Companies, Creative Tech, Non-profits",
+    desc: "Vibrant, passionate, and mission-aligned. Conveys genuine excitement about the company’s vision and team culture.",
+    example: "“I have long followed Acme’s innovative work in AI tooling and would be thrilled to bring my passion and experience to the team...”"
+  },
+  {
+    key: "concise" as Tone,
+    label: "Concise",
+    badge: "Fast Read",
+    icon: "⚡",
+    bestFor: "Busy Hiring Managers, Executive / Lead Roles, Fast-Paced Tech",
+    desc: "Short, punchy, and metric-dense. Cuts introductory fluff and presents your top key metrics and achievements right away.",
+    example: "“Delivering 35% faster render pipelines and scaling systems to 1M+ MAU, I am positioned to accelerate Acme’s core roadmap...”"
+  },
+  {
+    key: "creative" as Tone,
+    label: "Creative",
+    badge: "Story-Driven",
+    icon: "🎨",
+    bestFor: "Design, Marketing, Copywriting, Media, Product Management",
+    desc: "Distinctive and narrative-rich. Uses engaging storytelling to frame your problem-solving philosophy and unique perspective.",
+    example: "“Designing products isn't just about interface craft — it's about solving the human problem behind every user journey...”"
+  }
+];
+
+function ToneHelpModal({ 
+  isOpen, 
+  onClose, 
+  selectedTone, 
+  onSelectTone 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  selectedTone: Tone; 
+  onSelectTone: (t: Tone) => void;
+}) {
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      id="tone-help-modal-overlay"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(15, 15, 30, 0.55)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        zIndex: 1000,
+      }}
+    >
+      <div
+        id="tone-help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tone-modal-title"
+        className="modal-enter"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: C.card,
+          border: `1.5px solid ${C.border}`,
+          borderRadius: 16,
+          maxWidth: 620,
+          width: "100%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          boxShadow: "0 20px 48px rgba(0, 0, 0, 0.18)",
+          display: "flex",
+          flexDirection: "column",
+          padding: "24px",
+          boxSizing: "border-box",
+        }}
+      >
+        {/* Modal Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+              <Mono size={10} color={C.accent}>Guide & Recommendations</Mono>
+            </div>
+            <h3 id="tone-modal-title" style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 22, fontWeight: 600, color: C.ink, margin: 0 }}>
+              Choosing the Right Tone
+            </h3>
+            <p style={{ fontSize: 13, color: C.muted, margin: "6px 0 0", lineHeight: 1.5 }}>
+              Select a tone that matches the company culture and the impression you want to leave with the hiring team.
+            </p>
+          </div>
+          <button
+            id="close-tone-modal-btn"
+            onClick={onClose}
+            aria-label="Close tone guide"
+            style={{
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: "50%",
+              width: 32,
+              height: 32,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              color: C.muted,
+              fontSize: 14,
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Tone Cards Grid */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+          {TONE_EXPLANATIONS.map((item) => {
+            const isSelected = selectedTone === item.key;
+            return (
+              <div
+                key={item.key}
+                id={`tone-option-${item.key}`}
+                onClick={() => {
+                  onSelectTone(item.key);
+                  onClose();
+                }}
+                style={{
+                  border: `1.5px solid ${isSelected ? C.accent : C.border}`,
+                  background: isSelected ? "#f8f7ff" : C.card,
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  cursor: "pointer",
+                  transition: "all 0.18s ease",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>{item.icon}</span>
+                    <span style={{ fontSize: 15, fontWeight: 600, color: isSelected ? C.accent : C.ink }}>
+                      {item.label}
+                    </span>
+                    <span style={{ background: C.accentLight, color: C.accent, fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 10 }}>
+                      {item.badge}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.accent, display: "flex", alignItems: "center", gap: 4 }}>
+                      ✓ Selected
+                    </span>
+                  )}
+                </div>
+
+                <p style={{ fontSize: 12.5, color: C.muted, margin: 0, lineHeight: 1.5 }}>
+                  {item.desc}
+                </p>
+
+                <div style={{ background: C.surface, padding: "8px 12px", borderRadius: 8, fontSize: 11.5, color: C.ink }}>
+                  <strong style={{ color: C.accent }}>Best for:</strong> <span style={{ color: C.muted }}>{item.bestFor}</span>
+                </div>
+
+                <div style={{ fontSize: 11.5, color: "#6b7280", fontStyle: "italic", borderLeft: `2px solid ${C.dim}`, paddingLeft: 8, margin: "2px 0 0" }}>
+                  {item.example}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Modal Footer */}
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button
+            id="done-tone-modal-btn"
+            onClick={onClose}
+            style={{
+              padding: "10px 20px",
+              borderRadius: 8,
+              border: "none",
+              background: C.accent,
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Got it, thanks!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void; isGenerating?: boolean }) {
+  const [showToneHelp, setShowToneHelp] = useState(false);
   const tones = [{ key: "professional", label: "Professional" }, { key: "enthusiastic", label: "Enthusiastic" }, { key: "concise", label: "Concise" }, { key: "creative", label: "Creative" }];
   const lengths = [{ key: "brief", label: "Brief (~150w)" }, { key: "standard", label: "Standard (~280w)" }, { key: "detailed", label: "Detailed (~380w)" }];
   return (
@@ -297,10 +524,56 @@ function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: k
       <h2 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 26, fontWeight: 500, color: C.ink, margin: "8px 0 6px" }}>Choose tone & style</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 16 }}>
         <div>
-          <Label label="Tone" />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Mono>Tone</Mono>
+              <button
+                id="tone-help-btn"
+                type="button"
+                onClick={() => setShowToneHelp(true)}
+                title="Explain tones"
+                aria-label="Learn about tone options"
+                style={{
+                  background: C.surface,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: "50%",
+                  width: 18,
+                  height: 18,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: C.accent,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  lineHeight: 1,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                ?
+              </button>
+            </div>
+            <button
+              id="tone-guide-link-btn"
+              type="button"
+              onClick={() => setShowToneHelp(true)}
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: 11,
+                color: C.accent,
+                cursor: "pointer",
+                padding: 0,
+                textDecoration: "underline",
+              }}
+            >
+              Which tone should I choose?
+            </button>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {tones.map(t => (
-              <button key={t.key} disabled={isGenerating} onClick={() => up("tone", t.key as Tone)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.tone === t.key ? C.accent : C.border}`, background: f.tone === t.key ? C.accentLight : C.card, color: f.tone === t.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{t.label}</button>
+              <button key={t.key} id={`tone-btn-${t.key}`} disabled={isGenerating} onClick={() => up("tone", t.key as Tone)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.tone === t.key ? C.accent : C.border}`, background: f.tone === t.key ? C.accentLight : C.card, color: f.tone === t.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -308,12 +581,12 @@ function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: k
           <Label label="Length" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {lengths.map(l => (
-              <button key={l.key} disabled={isGenerating} onClick={() => up("length", l.key as Len)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.length === l.key ? C.accent : C.border}`, background: f.length === l.key ? C.accentLight : C.card, color: f.length === l.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{l.label}</button>
+              <button key={l.key} id={`length-btn-${l.key}`} disabled={isGenerating} onClick={() => up("length", l.key as Len)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.length === l.key ? C.accent : C.border}`, background: f.length === l.key ? C.accentLight : C.card, color: f.length === l.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{l.label}</button>
             ))}
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-          <GhostBtn label="Back" onClick={onBack} disabled={isGenerating} />
+          <GhostBtn id="step3-back-btn" label="Back" onClick={onBack} disabled={isGenerating} />
           <PrimaryBtn 
             id="generate-cover-letter-btn"
             label={isGenerating ? "Generating Cover Letter..." : "Generate Cover Letter"} 
@@ -323,6 +596,12 @@ function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: k
           />
         </div>
       </div>
+      <ToneHelpModal
+        isOpen={showToneHelp}
+        onClose={() => setShowToneHelp(false)}
+        selectedTone={f.tone}
+        onSelectTone={(t) => up("tone", t)}
+      />
     </div>
   );
 }
