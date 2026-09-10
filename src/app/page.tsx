@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   FileText,
   Clock,
+  Mail,
 } from "lucide-react";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
@@ -930,6 +931,20 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
     win.print();
   }
 
+  function handleDraftEmail() {
+    let subjectText = "Cover Letter Application";
+    if (form.jobTitle && form.company) {
+      subjectText = `Application for ${form.jobTitle} - ${form.company}`;
+    } else if (form.jobTitle) {
+      subjectText = `Application for ${form.jobTitle}`;
+    } else if (form.company) {
+      subjectText = `Job Application - ${form.company}`;
+    }
+    const subject = encodeURIComponent(subjectText);
+    const body = encodeURIComponent(editable);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
   const maxReached = refineCount >= 3;
 
   const statsCardContent = (
@@ -1139,6 +1154,28 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
         </button>
 
         <button
+          id="mobile-draft-email-btn"
+          onClick={handleDraftEmail}
+          aria-label="Draft cover letter in default email client"
+          title="Draft in Email"
+          style={{
+            minHeight: 40,
+            minWidth: 40,
+            padding: "8px",
+            borderRadius: 8,
+            border: `1.5px solid ${C.border}`,
+            background: "transparent",
+            color: C.muted,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer"
+          }}
+        >
+          <Mail size={16} />
+        </button>
+
+        <button
           id="mobile-toggle-stats-btn"
           onClick={() => setShowStatsDrawer(prev => !prev)}
           aria-label="Toggle stats and readability breakdown"
@@ -1189,6 +1226,7 @@ function Output({ editable, isGenerating, onChange, onRefine, onBack, onCopy, co
               shortcut={`${modKey}+↵`}
               icon={<Sparkles size={16} className="text-amber-500" />} 
             />
+            <GhostBtn id="draft-email-btn" label="Draft in Email" onClick={handleDraftEmail} icon={<Mail size={16} />} />
             <GhostBtn id="print-letter-btn" label="Print / Download PDF" onClick={handlePrint} shortcut={`${modKey}+P`} icon={<Printer size={16} />} />
           </div>
 
