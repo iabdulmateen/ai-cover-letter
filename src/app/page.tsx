@@ -26,6 +26,8 @@ import {
   Mail,
   History,
   RotateCcw,
+  ExternalLink,
+  Send,
 } from "lucide-react";
 
 type Tone = "professional" | "enthusiastic" | "concise" | "creative";
@@ -1084,6 +1086,429 @@ function HistoryCard({
   );
 }
 
+function EmailDraftModal({
+  isOpen,
+  onClose,
+  form,
+  editable,
+  onTriggerToast,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  form: Form;
+  editable: string;
+  onTriggerToast: (msg: string) => void;
+}) {
+  const { C, theme } = useTheme();
+
+  const defaultSubject = useMemo(() => {
+    if (form.jobTitle && form.company) {
+      return `Application for ${form.jobTitle} - ${form.company}`;
+    } else if (form.jobTitle) {
+      return `Application for ${form.jobTitle}`;
+    } else if (form.company) {
+      return `Job Application - ${form.company}`;
+    }
+    return "Cover Letter Application";
+  }, [form.jobTitle, form.company]);
+
+  const [subject, setSubject] = useState(defaultSubject);
+  const [recipient, setRecipient] = useState("");
+  const [copiedSubject, setCopiedSubject] = useState(false);
+  const [copiedFull, setCopiedFull] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const currentSubject = subject.trim() || defaultSubject;
+  const currentRecipient = recipient.trim();
+
+  function openGmail() {
+    const toParam = currentRecipient ? encodeURIComponent(currentRecipient) : "";
+    const suParam = encodeURIComponent(currentSubject);
+    const bodyParam = encodeURIComponent(editable);
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${toParam}&su=${suParam}&body=${bodyParam}`;
+    window.open(gmailUrl, "_blank", "noopener,noreferrer");
+    onTriggerToast("Opened Gmail compose tab");
+    onClose();
+  }
+
+  function openOutlook() {
+    const toParam = currentRecipient ? encodeURIComponent(currentRecipient) : "";
+    const suParam = encodeURIComponent(currentSubject);
+    const bodyParam = encodeURIComponent(editable);
+    const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${toParam}&subject=${suParam}&body=${bodyParam}`;
+    window.open(outlookUrl, "_blank", "noopener,noreferrer");
+    onTriggerToast("Opened Outlook compose tab");
+    onClose();
+  }
+
+  function openDefaultClient() {
+    const toParam = currentRecipient ? encodeURIComponent(currentRecipient) : "";
+    const suParam = encodeURIComponent(currentSubject);
+    const bodyParam = encodeURIComponent(editable);
+    const mailtoUrl = `mailto:${toParam}?subject=${suParam}&body=${bodyParam}`;
+
+    try {
+      const link = document.createElement("a");
+      link.href = mailtoUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch {
+      window.location.href = mailtoUrl;
+    }
+
+    // Also copy to clipboard as reliable backup
+    try {
+      navigator.clipboard.writeText(editable);
+    } catch {
+      // ignore
+    }
+
+    onTriggerToast("Triggered mail app (Letter copied as backup)");
+    onClose();
+  }
+
+  function handleCopySubject() {
+    navigator.clipboard.writeText(currentSubject);
+    setCopiedSubject(true);
+    onTriggerToast("Subject copied to clipboard");
+    setTimeout(() => setCopiedSubject(false), 2000);
+  }
+
+  function handleCopyFullEmail() {
+    const fullText = `Subject: ${currentSubject}\n\n${editable}`;
+    navigator.clipboard.writeText(fullText);
+    setCopiedFull(true);
+    onTriggerToast("Subject and Letter copied to clipboard");
+    setTimeout(() => setCopiedFull(false), 2000);
+  }
+
+  return (
+    <div
+      id="email-draft-modal-backdrop"
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
+        zIndex: 9999,
+        animation: "fadeIn 0.15s ease",
+      }}
+    >
+      <div
+        id="email-draft-modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          background: C.card,
+          border: `1.5px solid ${C.border}`,
+          borderRadius: 16,
+          boxShadow: "0 10px 40px rgba(0,0,0,0.35)",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Modal Header */}
+        <div
+          style={{
+            padding: "16px 20px",
+            borderBottom: `1px solid ${C.border}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: C.surface,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: `${C.accent}20`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: C.accent,
+              }}
+            >
+              <Mail size={17} />
+            </div>
+            <div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: C.ink }}>
+                Draft in Email
+              </h3>
+              <p style={{ margin: 0, fontSize: 11.5, color: C.dim }}>
+                Choose where to open or copy your application
+              </p>
+            </div>
+          </div>
+          <button
+            id="close-email-modal-btn"
+            type="button"
+            onClick={onClose}
+            aria-label="Close email draft modal"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: C.dim,
+              cursor: "pointer",
+              padding: "6px",
+              borderRadius: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Subject line field */}
+          <div>
+            <label
+              htmlFor="email-modal-subject-input"
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                color: C.muted,
+                marginBottom: 6,
+              }}
+            >
+              Email Subject Line
+            </label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                id="email-modal-subject-input"
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g. Application for Software Engineer - Acme Corp"
+                style={{
+                  flex: 1,
+                  padding: "9px 12px",
+                  borderRadius: 8,
+                  border: `1.5px solid ${C.border}`,
+                  background: C.surface,
+                  color: C.ink,
+                  fontSize: 13,
+                  outline: "none",
+                }}
+              />
+              <button
+                id="copy-subject-btn"
+                type="button"
+                onClick={handleCopySubject}
+                title="Copy Subject only"
+                style={{
+                  padding: "0 12px",
+                  borderRadius: 8,
+                  border: `1px solid ${C.border}`,
+                  background: copiedSubject ? "#10b981" : C.surface,
+                  color: copiedSubject ? "#fff" : C.ink,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {copiedSubject ? <Check size={14} /> : <Copy size={14} />}
+                <span>{copiedSubject ? "Copied" : "Copy"}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Optional recipient field */}
+          <div>
+            <label
+              htmlFor="email-modal-recipient-input"
+              style={{
+                display: "block",
+                fontSize: 12,
+                fontWeight: 600,
+                color: C.muted,
+                marginBottom: 6,
+              }}
+            >
+              Recipient / Hiring Email <span style={{ fontWeight: 400, color: C.dim }}>(optional)</span>
+            </label>
+            <input
+              id="email-modal-recipient-input"
+              type="email"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder="e.g. jobs@company.com, hr@company.com"
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: 8,
+                border: `1.5px solid ${C.border}`,
+                background: C.surface,
+                color: C.ink,
+                fontSize: 13,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Direct Launch Providers */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.dim, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+              Open Directly In
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {/* Gmail Web */}
+              <button
+                id="launch-gmail-btn"
+                type="button"
+                onClick={openGmail}
+                style={{
+                  padding: "12px",
+                  borderRadius: 10,
+                  border: `1.5px solid ${C.border}`,
+                  background: theme === "dark" ? "#1e293b" : "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  transition: "transform 0.1s ease, border-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#ea4335")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>🔴</span>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>Gmail</div>
+                    <div style={{ fontSize: 10.5, color: C.dim }}>Web browser</div>
+                  </div>
+                </div>
+                <ExternalLink size={14} color={C.dim} />
+              </button>
+
+              {/* Outlook Web */}
+              <button
+                id="launch-outlook-btn"
+                type="button"
+                onClick={openOutlook}
+                style={{
+                  padding: "12px",
+                  borderRadius: 10,
+                  border: `1.5px solid ${C.border}`,
+                  background: theme === "dark" ? "#1e293b" : "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  transition: "transform 0.1s ease, border-color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#0284c7")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>🔵</span>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>Outlook</div>
+                    <div style={{ fontSize: 10.5, color: C.dim }}>Web / Office 365</div>
+                  </div>
+                </div>
+                <ExternalLink size={14} color={C.dim} />
+              </button>
+            </div>
+
+            {/* Default Mail Client */}
+            <button
+              id="launch-default-mail-btn"
+              type="button"
+              onClick={openDefaultClient}
+              style={{
+                width: "100%",
+                marginTop: 10,
+                padding: "11px 14px",
+                borderRadius: 10,
+                border: `1.5px solid ${C.border}`,
+                background: C.surface,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                transition: "border-color 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = C.accent)}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = C.border)}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Send size={15} color={C.accent} />
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: C.ink }}>
+                  Default System Mail App (Apple Mail, Outlook Desktop, etc.)
+                </span>
+              </div>
+              <ExternalLink size={14} color={C.dim} />
+            </button>
+          </div>
+
+          {/* Divider & Copy All */}
+          <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+            <button
+              id="copy-full-email-package-btn"
+              type="button"
+              onClick={handleCopyFullEmail}
+              style={{
+                width: "100%",
+                padding: "11px",
+                borderRadius: 10,
+                border: "none",
+                background: copiedFull ? "#10b981" : C.accent,
+                color: "#ffffff",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 7,
+                transition: "background 0.2s ease",
+              }}
+            >
+              {copiedFull ? <Check size={16} strokeWidth={3} /> : <Copy size={16} />}
+              <span>{copiedFull ? "Subject & Letter Copied!" : "Copy Subject + Full Letter for Manual Paste"}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Output({ 
   editable, 
   isGenerating, 
@@ -1101,6 +1526,7 @@ function Output({
   history,
   onSelectHistory,
   onClearHistory,
+  onTriggerToast,
   modKey = "Ctrl" 
 }: {
   editable: string; 
@@ -1119,10 +1545,12 @@ function Output({
   history: LetterHistoryItem[];
   onSelectHistory: (item: LetterHistoryItem) => void;
   onClearHistory: () => void;
+  onTriggerToast: (msg: string) => void;
   modKey?: string;
 }) {
   const { C } = useTheme();
   const [showStatsDrawer, setShowStatsDrawer] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -1144,17 +1572,7 @@ function Output({
   }
 
   function handleDraftEmail() {
-    let subjectText = "Cover Letter Application";
-    if (form.jobTitle && form.company) {
-      subjectText = `Application for ${form.jobTitle} - ${form.company}`;
-    } else if (form.jobTitle) {
-      subjectText = `Application for ${form.jobTitle}`;
-    } else if (form.company) {
-      subjectText = `Job Application - ${form.company}`;
-    }
-    const subject = encodeURIComponent(subjectText);
-    const body = encodeURIComponent(editable);
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    setShowEmailModal(true);
   }
 
   const maxReached = refineCount >= 3;
@@ -1486,6 +1904,14 @@ function Output({
           )}
         </div>
       </div>
+
+      <EmailDraftModal 
+        isOpen={showEmailModal} 
+        onClose={() => setShowEmailModal(false)} 
+        form={form} 
+        editable={editable} 
+        onTriggerToast={onTriggerToast} 
+      />
 
       <Toast message={toastMessage || "Cover letter copied to clipboard"} visible={showToast} onDismiss={onDismissToast} />
     </div>
@@ -1828,6 +2254,7 @@ export default function Home() {
             history={history}
             onSelectHistory={handleSelectHistory}
             onClearHistory={handleClearHistory}
+            onTriggerToast={triggerToast}
             modKey={modKey}
           />
         )}
