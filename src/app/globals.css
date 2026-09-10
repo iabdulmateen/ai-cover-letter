@@ -41,3 +41,19 @@ input:focus-visible, textarea:focus-visible, select:focus-visible {
 
 @keyframes bar-grow { from { width: 0; } }
 .bar-grow { animation: bar-grow 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(80, 70, 228, 0.45);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(0.985);
+    box-shadow: 0 0 0 8px rgba(80, 70, 228, 0);
+  }
+}
+.btn-pulse {
+  animation: pulse-subtle 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

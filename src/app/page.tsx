@@ -89,11 +89,57 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   return <div><Label label={label} hint={hint} />{children}</div>;
 }
 
-function PrimaryBtn({ label, onClick, disabled, icon }: { label: string; onClick: () => void; disabled?: boolean; icon?: React.ReactNode }) {
-  const active = !disabled;
+function PrimaryBtn({ 
+  id,
+  label, 
+  onClick, 
+  disabled, 
+  icon,
+  isGenerating,
+  className = ""
+}: { 
+  id?: string;
+  label: string; 
+  onClick: () => void; 
+  disabled?: boolean; 
+  icon?: React.ReactNode;
+  isGenerating?: boolean;
+  className?: string;
+}) {
+  const active = !disabled && !isGenerating;
   return (
-    <button onClick={onClick} disabled={!active} style={{ width: "100%", padding: "12px 20px", borderRadius: 10, border: "none", background: active ? C.accent : C.dim, color: "#fff", fontSize: 14, fontWeight: 600, cursor: active ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-      {icon}{label}
+    <button 
+      id={id}
+      onClick={onClick} 
+      disabled={!active} 
+      className={`${isGenerating ? "btn-pulse" : ""} ${className}`.trim()}
+      style={{ 
+        width: "100%", 
+        padding: "12px 20px", 
+        borderRadius: 10, 
+        border: "none", 
+        background: isGenerating ? "#4338ca" : active ? C.accent : C.dim, 
+        color: "#fff", 
+        fontSize: 14, 
+        fontWeight: 600, 
+        cursor: active ? "pointer" : isGenerating ? "wait" : "not-allowed", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center", 
+        gap: 8,
+        transition: "all 0.25s ease"
+      }}
+    >
+      {isGenerating ? (
+        <>
+          <span className="inline-block animate-spin" style={{ fontSize: 13 }}>✦</span>
+          {label}
+        </>
+      ) : (
+        <>
+          {icon}{label}
+        </>
+      )}
     </button>
   );
 }
@@ -200,7 +246,7 @@ function Step2({ f, up, onNext, onBack }: { f: Form; up: (k: keyof Form, v: stri
   );
 }
 
-function Step3({ f, up, onGenerate, onBack }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void }) {
+function Step3({ f, up, onGenerate, onBack, isGenerating }: { f: Form; up: (k: keyof Form, v: string) => void; onGenerate: () => void; onBack: () => void; isGenerating?: boolean }) {
   const tones = [{ key: "professional", label: "Professional" }, { key: "enthusiastic", label: "Enthusiastic" }, { key: "concise", label: "Concise" }, { key: "creative", label: "Creative" }];
   const lengths = [{ key: "brief", label: "Brief (~150w)" }, { key: "standard", label: "Standard (~280w)" }, { key: "detailed", label: "Detailed (~380w)" }];
   return (
@@ -212,7 +258,7 @@ function Step3({ f, up, onGenerate, onBack }: { f: Form; up: (k: keyof Form, v: 
           <Label label="Tone" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {tones.map(t => (
-              <button key={t.key} onClick={() => up("tone", t.key as Tone)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.tone === t.key ? C.accent : C.border}`, background: f.tone === t.key ? C.accentLight : C.card, color: f.tone === t.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{t.label}</button>
+              <button key={t.key} disabled={isGenerating} onClick={() => up("tone", t.key as Tone)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.tone === t.key ? C.accent : C.border}`, background: f.tone === t.key ? C.accentLight : C.card, color: f.tone === t.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -220,13 +266,19 @@ function Step3({ f, up, onGenerate, onBack }: { f: Form; up: (k: keyof Form, v: 
           <Label label="Length" />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 }}>
             {lengths.map(l => (
-              <button key={l.key} onClick={() => up("length", l.key as Len)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.length === l.key ? C.accent : C.border}`, background: f.length === l.key ? C.accentLight : C.card, color: f.length === l.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>{l.label}</button>
+              <button key={l.key} disabled={isGenerating} onClick={() => up("length", l.key as Len)} style={{ padding: "12px", borderRadius: 10, border: `1.5px solid ${f.length === l.key ? C.accent : C.border}`, background: f.length === l.key ? C.accentLight : C.card, color: f.length === l.key ? C.accent : C.ink, fontWeight: 600, fontSize: 13, cursor: isGenerating ? "not-allowed" : "pointer" }}>{l.label}</button>
             ))}
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-          <GhostBtn label="Back" onClick={onBack} />
-          <PrimaryBtn label="Generate Cover Letter" onClick={onGenerate} icon={<span>✒️</span>} />
+          <GhostBtn label="Back" onClick={onBack} disabled={isGenerating} />
+          <PrimaryBtn 
+            id="generate-cover-letter-btn"
+            label={isGenerating ? "Generating Cover Letter..." : "Generate Cover Letter"} 
+            onClick={onGenerate} 
+            isGenerating={isGenerating}
+            icon={<span>✒️</span>} 
+          />
         </div>
       </div>
     </div>
@@ -340,7 +392,6 @@ export default function Home() {
   async function handleGenerate(isRefine = false) {
     if (isRefine && refineCount >= 3) return;
     setIsGenerating(true);
-    setStep("output");
 
     try {
       const res = await fetch("/api/generate", {
@@ -355,12 +406,15 @@ export default function Home() {
           setRefineCount(prev => prev + 1);
         } else {
           setRefineCount(0); // Reset on fresh generation
+          setStep("output");
         }
       } else {
         setEditable(`Error: ${data.error}`);
+        setStep("output");
       }
     } catch (e) {
       setEditable("Network error occurred.");
+      setStep("output");
     } finally {
       setIsGenerating(false);
     }
@@ -380,7 +434,7 @@ export default function Home() {
           <div style={{ background: C.card, border: `1.5px solid ${C.border}`, borderRadius: 16, padding: "24px 20px", boxShadow: "0 4px 24px rgba(0,0,0,0.02)", boxSizing: "border-box" }}>
             {step === 1 && <Step1 f={form} up={updateField} onNext={() => setStep(2)} />}
             {step === 2 && <Step2 f={form} up={updateField} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
-            {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} />}
+            {step === 3 && <Step3 f={form} up={updateField} onGenerate={() => handleGenerate(false)} onBack={() => setStep(2)} isGenerating={isGenerating} />}
           </div>
         </div>
       ) : (

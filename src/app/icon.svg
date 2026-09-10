@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5046e4" />
+      <stop offset="100%" stop-color="#3b31c9" />
+    </linearGradient>
+    <linearGradient id="foldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8179f8" />
+      <stop offset="100%" stop-color="#5046e4" />
+    </linearGradient>
+  </defs>
+  <!-- Background Container -->
+  <rect width="32" height="32" rx="7" fill="url(#bgGrad)" />
+  
+  <!-- Document Sheet -->
+  <path d="M8 7C8 5.89543 8.89543 5 10 5H18L24 11V25C24 26.1046 23.1046 27 22 27H10C8.89543 27 8 26.1046 8 25V7Z" fill="#ffffff" fill-opacity="0.96" />
+  
+  <!-- Corner Fold -->
+  <path d="M18 5L24 11H19C18.4477 11 18 10.5523 18 10V5Z" fill="url(#foldGrad)" />
+  
+  <!-- Text lines -->
+  <rect x="11" y="14" width="10" height="2" rx="1" fill="#5046e4" />
+  <rect x="11" y="18" width="8" height="2" rx="1" fill="#756df0" />
+  <rect x="11" y="22" width="6" height="2" rx="1" fill="#9e98f6" />
+  
+  <!-- Sparkle / AI Accent -->
+  <path d="M21 17L21.7 18.3L23 19L21.7 19.7L21 21L20.3 19.7L19 19L20.3 18.3Z" fill="#5046e4" />
+</svg>
